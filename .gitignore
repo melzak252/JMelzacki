@@ -1,0 +1,7 @@
+__pychache__/
+
+.env
+venv
+.venv
+
+node_modules
