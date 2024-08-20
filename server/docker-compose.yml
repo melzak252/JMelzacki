@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:14
+    container_name: database
+    environment:
+      POSTGRES_DB: guess_country
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  web:
+    container_name: server
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    env_file:
+      - .env
