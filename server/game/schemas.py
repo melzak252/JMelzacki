@@ -1,6 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 from datetime import date, datetime
+
+from users.schemas import UserDisplay
 
 # Country Schema
 class DailyCountryBase(BaseModel):
@@ -20,15 +22,16 @@ class DailyCountryCreate(DailyCountryBase):
 # Question Schema
 class QuestionBase(BaseModel):
     question: str
-    answer: str
 
 class QuestionCreate(QuestionBase):
     user_id: int
     country_id: int
+    answer: str
 
 class QuestionDisplay(QuestionBase):
     id: int
     asked_at: datetime
+    answer: str
 
     class Config:
         from_attributes = True
@@ -62,3 +65,8 @@ class DailyUsageDisplay(DailyUsageBase):
 
     class Config:
         from_attributes = True
+
+class UserHistory(BaseModel):
+    user: UserDisplay
+    questions: List[QuestionDisplay]
+    guesses: List[GuessDisplay]

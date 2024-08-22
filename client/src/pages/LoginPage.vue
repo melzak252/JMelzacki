@@ -43,7 +43,7 @@ import { useRouter } from 'vue-router';
           
           // Save the token and update the auth state
           setTokenCookie(token);
-          login(token);
+          login();
   
           errorMessage.value = '';
           router.push({ name: 'Home' });

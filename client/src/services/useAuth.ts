@@ -9,7 +9,6 @@ export function useAuth() {
   const fetchUserData = async () => {
     const token = getTokenCookie();
     if (!token) return;
-    console.log(token)
 
     try {
       let apiUser = await userData(token)
@@ -20,7 +19,7 @@ export function useAuth() {
     }
   };
 
-  const login = (token: string) => {
+  const login = () => {
     isAuthenticated.value = true;
     fetchUserData()
   };

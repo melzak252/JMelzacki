@@ -27,26 +27,26 @@
   
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
-  import { register } from '../services/api';  // Import the registration API call
-  import { setTokenCookie } from '../services/cookies';  // Set token as cookie
-  import { useAuth } from '../services/useAuth';  // Import auth composable
+import { register } from '../services/api';
   
   export default defineComponent({
     name: 'RegistrationPage',
     setup() {
-      const email = ref('');
-      const username = ref('');
-      const password = ref('');
+      const email = ref<string>('');
+      const username = ref<string>('');
+      const password = ref<string>('');
       const errorMessage = ref('');
-      const { login } = useAuth();  // Get login function from auth composable
   
       const submitRegistration = async () => {
         try {
           // Call the registration API
-          const response = await register({ username: username.value, email: email.value, password: password.value });
-        
+          register({
+            email: email.value, 
+            username: username.value, 
+            password: password.value
+          }
+          );
           errorMessage.value = '';
-          window.location.href = '/';
         } catch (error) {
           errorMessage.value = 'Registration failed. Please try again.';
         }

@@ -6,12 +6,12 @@
       <v-spacer></v-spacer>
       <v-btn to="/">Home</v-btn>
       <v-btn to="/info">About</v-btn>
-      <v-btn to="/game">Play</v-btn>
       <template v-if="!isAuthenticated">
         <v-btn to="/login">Login</v-btn>
         <v-btn to="/register">Register</v-btn>
       </template>
       <template v-else>
+        <v-btn to="/game">Play</v-btn>
         <v-btn style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
         <span style="padding: 20px;"> {{ user?.username }}</span>
       </template>
@@ -48,7 +48,7 @@ export default defineComponent({
       } else if(getTokenCookie()) {
         let token = getTokenCookie();
         if(!token) return;
-        login(token)
+        login()
       }
     });
 

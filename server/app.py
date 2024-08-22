@@ -23,13 +23,13 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from users import router as users_router
-from game import router as game_router, generate_new_country
+from game import router as game_router
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 scheduler = AsyncIOScheduler()
     
-scheduler.add_job(generate_new_country, CronTrigger(hour=0, minute=1))
+# scheduler.add_job(generate_new_country, CronTrigger(hour=0, minute=1))
 
 async def init_models(engine: AsyncEngine):
     async with engine.begin() as conn:
@@ -74,7 +74,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     
     access_token = create_access_token(data={"sub": user.username})
     
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, )
     return {"access_token": access_token, "username": user.username, "token_type": "bearer"}
 
 
