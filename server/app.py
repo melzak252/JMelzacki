@@ -58,14 +58,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users_router, prefix="/users", tags=["users"])
-app.include_router(game_router, prefix="/game", tags=["game"])
+app.include_router(users_router, prefix="/api/users", tags=["users"])
+app.include_router(game_router, prefix="/api/game", tags=["game"])
 
-@app.get("/")
+@app.get("/api")
 async def root():
     return {"message": "Welcome to the Game API!"}
 
-@app.post("/login")
+@app.post("/api/login")
 async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     user: User = await ucrud.get_user(form_data.username, db)
     
@@ -78,11 +78,11 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     return {"access_token": access_token, "username": user.username, "token_type": "bearer"}
 
 
-@app.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@app.post("/api/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response):
     response.delete_cookie(key="access_token")
     return {"message": "Successfully logged out"}
 
-@app.post("/register", response_model=UserDisplay)
+@app.post("/api/register", response_model=UserDisplay)
 async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
     return await ucrud.register_user(user=user, session=db)
