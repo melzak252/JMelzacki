@@ -74,7 +74,14 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     
     access_token = create_access_token(data={"sub": user.username})
     
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, )
+    response.set_cookie(
+        key="access_token",
+        value=access_token,  # No 'Bearer' prefix needed
+        httponly=True,
+        secure=True,  # Set to True in production
+        samesite="Lax",
+        path="/",
+    )
     return {"access_token": access_token, "username": user.username, "token_type": "bearer"}
 
 
