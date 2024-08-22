@@ -21,7 +21,7 @@ export function useGame() {
             error.value = null;
 
             try {
-                const response = await axios.post('http://localhost:8080/game/question', { question: question },
+                const response = await axios.post('https://jmelzacki.com/api/game/question', { question: question },
                     {
                         withCredentials: true
                     });
@@ -43,7 +43,7 @@ export function useGame() {
         try {
             loading.value = true;
             error.value = null;
-            const response = await axios.get('http://localhost:8080/game/history',
+            const response = await axios.get('https://jmelzacki.com/api/game/history',
                 {
                     withCredentials: true
                 });
@@ -73,7 +73,7 @@ export function useGame() {
 
             try {
                 // Simulate an API call to check if the guess is correct
-                const res = await axios.post('http://localhost:8080/game/guess', { guess: guess },
+                const res = await axios.post('https://jmelzacki.com/api/game/guess', { guess: guess },
                     {
                         withCredentials: true
                     });
