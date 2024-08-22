@@ -17,6 +17,7 @@ class DevUser(BaseModel):
     
     class Config:
         from_attributes = True
+        
 class UserDisplay(BaseModel):
     id: int
     username: str

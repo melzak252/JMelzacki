@@ -1,33 +1,35 @@
 import { ref } from 'vue';
-import { getTokenCookie, removeTokenCookie } from '../services/cookies';
 import { userData } from '../services/api';
+import axios from 'axios';
 
-const isAuthenticated = ref<boolean>(!!getTokenCookie());
+const isAuthenticated = ref<boolean>(false);
 const user = ref<{ username: string; email: string } | null>(null);
 
 export function useAuth() {
-  const fetchUserData = async () => {
-    const token = getTokenCookie();
-    if (!token) return;
-
+  const fetchUserData = async (): Promise<boolean> => {
     try {
-      let apiUser = await userData(token)
+      let apiUser = await userData()
       user.value = apiUser; // Set the username from the response
+      return !!apiUser;
     } catch (error) {
       console.error('Failed to fetch user data:', error);
-      logout(); // If fetching user data fails, consider logging the user out
+      return false;
     }
   };
 
-  const login = () => {
-    isAuthenticated.value = true;
-    fetchUserData()
+  const login = async () => {
+    isAuthenticated.value = await fetchUserData();
+
   };
 
-  const logout = () => {
-    removeTokenCookie();
+  const logout = async () => {
     isAuthenticated.value = false;
     user.value = null;
+
+    await axios.post('https://jmelzacki.com/api/logout', {},
+      {
+        withCredentials: true
+      });
   };
 
   return {

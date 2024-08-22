@@ -12,11 +12,9 @@ export const register = async (credentials: { email: string; username: string; p
   return apiClient.post("/register", credentials);
 };
 
-export const userData = async (token: string): Promise<{ username: string; email: string; }> => {
+export const userData = async (): Promise<{ username: string; email: string; }> => {
     const response = await apiClient.get('/users/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      withCredentials: true
     });
     return response.data;
 };

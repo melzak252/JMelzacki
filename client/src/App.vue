@@ -28,12 +28,11 @@
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue';
 import { useAuth } from './services/useAuth';
-import { getTokenCookie } from './services/cookies';
 
 export default defineComponent({
   name: 'App',
   setup() {
-    const { isAuthenticated, user, login, logout, fetchUserData } = useAuth();
+    const { isAuthenticated, user, login, logout } = useAuth();
 
     const handleLogout = () => {
       logout();
@@ -42,14 +41,7 @@ export default defineComponent({
 
     // Fetch user data on app initialization if the user is authenticated
     onMounted(() => {
-      
-      if (isAuthenticated.value) {
-        fetchUserData()
-      } else if(getTokenCookie()) {
-        let token = getTokenCookie();
-        if(!token) return;
-        login()
-      }
+      login()
     });
 
     return {
