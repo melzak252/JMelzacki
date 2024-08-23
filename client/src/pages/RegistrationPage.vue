@@ -20,7 +20,6 @@
           required
         ></v-text-field>
         <v-btn type="submit" color="primary">Register</v-btn>
-        <v-alert v-if="popUpText" type="error">{{ popUpText }}</v-alert>
       </v-form>
       <v-dialog v-model="showPopup" max-width="500">
         <v-card>
