@@ -75,8 +75,8 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref, watch } from 'vue';
-import { useAuth } from '../services/useAuth'
-import { useGame } from '../services/useGame'
+import { useAuth } from '../consumable/useAuth'
+import { useGame } from '../consumable/useGame'
 import { useRouter } from 'vue-router';
 export default defineComponent({
   name: 'GamePage',

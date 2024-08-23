@@ -20,14 +20,26 @@
           required
         ></v-text-field>
         <v-btn type="submit" color="primary">Register</v-btn>
-        <v-alert v-if="errorMessage" type="error">{{ errorMessage }}</v-alert>
+        <v-alert v-if="popUpText" type="error">{{ popUpText }}</v-alert>
       </v-form>
+      <v-dialog v-model="showPopup" max-width="500">
+        <v-card>
+          <v-card-title class="text-h5">{{ popUpTitle }}</v-card-title>
+          <v-card-text>
+          {{ popUpText }}
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="primary" @click="closePopup">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-container>
   </template>
   
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
-import { register } from '../services/api';
+  import axios from 'axios';
+import { useRouter } from 'vue-router';
   
   export default defineComponent({
     name: 'RegistrationPage',
@@ -35,29 +47,46 @@ import { register } from '../services/api';
       const email = ref<string>('');
       const username = ref<string>('');
       const password = ref<string>('');
-      const errorMessage = ref('');
-  
+      const popUpTitle = ref('');
+      const popUpText = ref('');
+      const router = useRouter();
+      const showPopup = ref<boolean>(false);
+      const registered = ref<boolean>(false);
       const submitRegistration = async () => {
         try {
           // Call the registration API
-          register({
+          await axios.post("/register", {
             email: email.value, 
             username: username.value, 
             password: password.value
-          }
-          );
-          errorMessage.value = '';
-        } catch (error) {
-          errorMessage.value = 'Registration failed. Please try again.';
+          }, {
+            withCredentials: true
+          });
+          showPopup.value = true;
+          popUpTitle.value = `User: ${username.value} successfully registered!`
+          popUpText.value = `You can go to login page and login as ${username.value}`;
+          registered.value = true;
+        } catch (error: any) {
+          showPopup.value = true;
+          popUpTitle.value = 'Registration failed.';
+          popUpText.value = error.message
         }
       };
-  
+      const closePopup = () => {
+        showPopup.value = false;
+        if(registered) {
+          router.push({ name: 'Login'})
+        }
+      }
       return {
         username,
         email,
         password,
+        showPopup,
+        popUpText,
+        popUpTitle,
         submitRegistration,
-        errorMessage,
+        closePopup
       };
     },
   });

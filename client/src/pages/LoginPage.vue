@@ -23,9 +23,8 @@
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
   import { login as loginApi } from '../services/auth';
-  import { setTokenCookie } from '../services/cookies';
-  import { useAuth } from '../services/useAuth';
-import { useRouter } from 'vue-router';
+  import { useAuth } from '../consumable/useAuth';
+  import { useRouter } from 'vue-router';
   
   export default defineComponent({
     name: 'LoginPage',
@@ -38,11 +37,7 @@ import { useRouter } from 'vue-router';
 
       const submitLogin = async () => {
         try {
-          const response = await loginApi({ username: username.value, password: password.value });
-          const token = response.data.access_token;
-          
-          // Save the token and update the auth state
-          setTokenCookie(token);
+          await loginApi({ username: username.value, password: password.value });
           login();
   
           errorMessage.value = '';

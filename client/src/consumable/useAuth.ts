@@ -1,5 +1,4 @@
 import { ref } from 'vue';
-import { userData } from '../services/api';
 import axios from 'axios';
 
 const isAuthenticated = ref<boolean>(false);
@@ -8,7 +7,10 @@ const user = ref<{ username: string; email: string } | null>(null);
 export function useAuth() {
   const fetchUserData = async (): Promise<boolean> => {
     try {
-      let apiUser = await userData()
+      const response = await axios.get('/users/me', {
+        withCredentials: true
+      });
+      let apiUser = response.data;
       user.value = apiUser; // Set the username from the response
       return !!apiUser;
     } catch (error) {
