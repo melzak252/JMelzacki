@@ -9,7 +9,7 @@
           </v-card-title>
           <v-card-text class="py-5">
             <v-row class="my-5">
-              <v-col cols="12">
+              <v-col cols="4">
                 <v-avatar
                   size="300"
                   class="mx-auto mb-4"
@@ -19,6 +19,8 @@
                     alt="Jakub Melzacki"
                   ></v-img>
                 </v-avatar>
+              </v-col>
+              <v-col cols="8">
                 <h2 class="text-h5 font-weight-bold mb-4">About Me</h2>
                 <p>
                   I am a passionate knowledge-seeker. If you have interesting information, I’m always eager to hear it! 😋 
