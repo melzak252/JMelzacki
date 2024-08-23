@@ -69,7 +69,8 @@ import { useRouter } from 'vue-router';
         } catch (error: any) {
           showPopup.value = true;
           popUpTitle.value = 'Registration failed.';
-          popUpText.value = error.message
+          popUpText.value = error.message;
+          registered.value = false;
         }
       };
       const closePopup = () => {
