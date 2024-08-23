@@ -55,7 +55,7 @@ import { useRouter } from 'vue-router';
       const submitRegistration = async () => {
         try {
           // Call the registration API
-          await axios.post("/register", {
+          await axios.post("https://jmelzacki.com/api/register", {
             email: email.value, 
             username: username.value, 
             password: password.value
