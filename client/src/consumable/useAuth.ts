@@ -11,7 +11,8 @@ export function useAuth() {
         withCredentials: true
       });
       let apiUser = response.data;
-      user.value = apiUser; // Set the username from the response
+      user.value = apiUser; // Set the username from the response'
+      console.log(apiUser)
       return !!apiUser;
     } catch (error) {
       console.error('Failed to fetch user data:', error);
