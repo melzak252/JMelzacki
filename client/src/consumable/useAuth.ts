@@ -14,7 +14,6 @@ export function useAuth() {
       user.value = apiUser; // Set the username from the response'
       return !!apiUser;
     } catch (error) {
-      console.error('Failed to fetch user data:', error);
       return false;
     }
   };

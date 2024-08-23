@@ -25,6 +25,9 @@ def verify_access_token(token: str):
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if token is None:
+        raise credentials_exception
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
