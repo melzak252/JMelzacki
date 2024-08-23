@@ -11,7 +11,7 @@
             <v-row class="my-5">
               <v-col cols="12">
                 <v-avatar
-                  size="150"
+                  size="300"
                   class="mx-auto mb-4"
                 >
                   <v-img
