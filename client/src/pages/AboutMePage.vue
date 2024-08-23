@@ -26,10 +26,12 @@
                   I am a passionate knowledge-seeker. If you have interesting information, I’m always eager to hear it! 😋 <br>
                   My main fields of interest include Physics, Mathematics, Computer Science, and Philosophy (I strongly believe Hegel is a charlatan!). <br>
                 </p>
-                <h5>Currently</h5>
+                <br>
+
+                <h5 class="text-h5 font-weight-bold mb-4">Currently</h5>
                 <p>
                   I am focusing on developing my skills in <strong>Data Science</strong>, aiming to apply this knowledge to my hobby of creating intelligent systems for games like <strong>League of Legends, TFT, Chess</strong>, and many others. <br>
-
+                  <br>
                   I serve as the Vice President of the <strong>DataScience Club at PJATK</strong>, where I am recognized as an expert in <strong>Python</strong>, the language in which I feel most comfortable.
                   However, that doesn’t mean other technologies are foreign to me! <br>
                   I also have experience with <strong>C++20, TypeScript, Bash</strong>, and many other tools and languages. 
