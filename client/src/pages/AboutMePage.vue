@@ -15,7 +15,7 @@
                   class="mx-auto mb-4"
                 >
                   <v-img
-                    src="https://jmelzacki.com/public/Jakub_Melzacki.png"
+                    src="@/assets/Jakub_Melzacki.png"
                     alt="Jakub Melzacki"
                   ></v-img>
                 </v-avatar>

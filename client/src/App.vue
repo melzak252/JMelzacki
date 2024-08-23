@@ -5,7 +5,7 @@
       <v-toolbar-title>Country Guessing Game</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn to="/">Home</v-btn>
-      <v-btn to="/info">About</v-btn>
+      <v-btn to="/aboutme">About Me</v-btn>
       <template v-if="!isAuthenticated">
         <v-btn to="/login">Login</v-btn>
         <v-btn to="/register">Register</v-btn>
