@@ -1,7 +1,7 @@
 // src/router.ts
 import { createRouter, createWebHistory } from "vue-router";
 import HomePage from "./pages/HomePage.vue";
-import InfoPage from "./pages/InfoPage.vue";
+import AboutMePage from "./pages/AboutMePage.vue";
 import GamePage from "./pages/GamePage.vue";
 import LoginPage from "./pages/LoginPage.vue";
 import RegistrationPage from "./pages/RegistrationPage.vue";
@@ -13,9 +13,9 @@ const routes = [
     component: HomePage,
   },
   {
-    path: "/info",
-    name: "Info",
-    component: InfoPage,
+    path: "/aboutme",
+    name: "AboutMe",
+    component: AboutMePage,
   },
   {
     path: "/game",
