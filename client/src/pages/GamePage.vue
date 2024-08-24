@@ -11,6 +11,7 @@
             maxlength="100" 
             label="Ask a True/False Question"
             placeholder="Is it located in Europe?" 
+            hide-details="auto"
             @keyup.enter="sendQuestion"
             :disabled="remainingQuestions <= 0 || loading || isGameOver"></v-text-field>
           <v-btn class="sent-btn" style="height: 56px;" @click="sendQuestion" color="primary"
