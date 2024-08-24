@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import config from '../config.json';
 
 const isAuthenticated = ref<boolean>(false);
 const user = ref<{ username: string; email: string } | null>(null);
@@ -7,7 +8,7 @@ const user = ref<{ username: string; email: string } | null>(null);
 export function useAuth() {
   const fetchUserData = async (): Promise<boolean> => {
     try {
-      const response = await axios.get('https://jmelzacki.com/api/users/me', {
+      const response = await axios.get(`${config.apiUrl}/users/me`, {
         withCredentials: true
       });
       let apiUser = response.data;
@@ -27,7 +28,7 @@ export function useAuth() {
     isAuthenticated.value = false;
     user.value = null;
 
-    await axios.post('https://jmelzacki.com/api/logout', {},
+    await axios.post(`${config.apiUrl}/api/logout`, {},
       {
         withCredentials: true
       });

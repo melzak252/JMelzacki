@@ -1,5 +1,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import config from '../config.json';
+
 export function useGame() {
     const maxQuestions = 10;
     const maxGuesses = 3;
@@ -21,7 +23,7 @@ export function useGame() {
             error.value = null;
 
             try {
-                const response = await axios.post('https://jmelzacki.com/api/game/question', { question: question },
+                const response = await axios.post(`${config.apiUrl}/game/question`, { question: question },
                     {
                         withCredentials: true
                     });
@@ -43,7 +45,7 @@ export function useGame() {
         try {
             loading.value = true;
             error.value = null;
-            const response = await axios.get('https://jmelzacki.com/api/game/history',
+            const response = await axios.get(`${config.apiUrl}/game/history`,
                 {
                     withCredentials: true
                 });
@@ -73,7 +75,7 @@ export function useGame() {
 
             try {
                 // Simulate an API call to check if the guess is correct
-                const res = await axios.post('https://jmelzacki.com/api/game/guess', { guess: guess },
+                const res = await axios.post(`${config.apiUrl}/game/guess`, { guess: guess },
                     {
                         withCredentials: true
                     });

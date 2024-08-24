@@ -1,5 +1,17 @@
 version: '3.8'
 services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Your NGINX configuration
+      - /etc/ssl/certs:/etc/ssl/certs:ro  # Mount the SSL certs directory
+    depends_on:
+      - frontend
+      - backend
   db:
     image: postgres:14
     container_name: database
@@ -11,8 +23,7 @@ services:
       - ./data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
-  server:
+  backend:
     container_name: server
     build: ./server   # Specify the build context for the backend (server)
     ports:
@@ -23,14 +34,14 @@ services:
       - OPENAI_API_KEY=sk-...
       - DATABASE_URL=postgresql+asyncpg://postgres:root@db:5432/guess_country
       - QUIZ_MODEL=gpt-3.5-turbo
-      - SECRET_KEY=your_secret_key
+      - SECRET_KEY=...
       - ALGORITHM=HS256
-      - ACCESS_TOKEN_EXPIRE_MINUTES=30  
-  client:
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30   
+  frontend:
     container_name: client
     build: ./client   # Specify the build context for the frontend (client)
     ports:
-      - "3000:80"  # Expose the frontend on port 3000
+      - "5173:80"
     depends_on:
-      - server        # Ensure the client waits for the backend to be available
+      - backend         # Ensure the client waits for the backend to be available
 

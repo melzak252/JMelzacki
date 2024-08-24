@@ -1,8 +1,9 @@
 
 import axios from 'axios';
+import config from '../config.json'
 
 const apiClient = axios.create({
-  baseURL: "https://jmelzacki.com/api", // Replace with your backend URL
+  baseURL: config.apiUrl, // Replace with your backend URL
   headers: {
     "Content-Type": "application/x-www-form-urlencoded", // Use form-encoded data
   },

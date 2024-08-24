@@ -1,75 +1,82 @@
 <template>
   <v-container class="game-page">
-    <v-row>
-      <!-- Chat Area -->
-      <v-col cols="8">
-        <v-card class="chat-box">
-          <v-card-title>Ask Your Questions</v-card-title>
-          <div class="sent-box">
-            <v-text-field v-model="questionInput" label="Ask a True/False Question"
-              placeholder="Is it located in Europe?" hide-details="auto" @keyup.enter="sendQuestion"
-              :disabled="remainingQuestions <= 0 || loading || isGameOver"></v-text-field>
-            <v-btn class="sent-btn" style="height: 56px;" @click="sendQuestion" color="primary"
-              :disabled="remainingQuestions <= 0 || loading || isGameOver">
-              Ask
-              <v-icon dark right style="padding-left: 10px;">
-                mdi-send
-              </v-icon>
-            </v-btn>
-          </div>
-          <v-row>
-            <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
-              <v-card outlined :class="getRowClass(entry.answer)" class="pa-4">
-                <v-card-title>{{ entry.question }}</v-card-title>
-                <v-card-subtitle>{{ entry.answer }}</v-card-subtitle>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-card>
-      </v-col>
+    <div class="game-container">
+      <v-card class="chat-box">
+        <v-card-title>Ask Your Questions</v-card-title>
+        <div class="sent-box ma-0">
 
-      <!-- Guess Area -->
-      <v-col cols="4">
-        <v-card class="pa-4 guess-box">
-          <v-card-title>Make a Guess</v-card-title>
-          <v-card-text>
-            <p>You have {{ remainingGuesses }} guesses remaining.</p>
-            <v-text-field v-model="guessInput" label="Guess the Country" placeholder="Enter your guess..."
-              @keyup.enter="sendGuess" :disabled="remainingGuesses <= 0 || loading || isGameOver"></v-text-field>
-            <v-btn @click="sendGuess" color="primary" :disabled="remainingGuesses <= 0 || loading || isGameOver">
-              Guess
-              <v-icon dark right style="padding-left: 10px;">
-                mdi-magnify
-              </v-icon>
-            </v-btn>
-          </v-card-text>
-          <v-row>
-            <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
-              <v-card outlined :class="getRowClass(entry.response)" class="pa-4">
-                <v-card-title>{{ entry.guess }}</v-card-title>
-                <v-card-subtitle>{{ entry.response }}</v-card-subtitle>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-card>
-      </v-col>
-      <v-dialog v-model="showPopup" max-width="500">
-        <v-card>
-          <v-card-title class="text-h5">{{ won ? 'Congratulations!' : 'Game Over' }}</v-card-title>
-          <v-card-text>
-            <p v-if="won">
-              Great job! You've guessed the correct country. Keep it up!
-            </p>
-            <p v-else>
-              Don't worry! The solution will be revealed tomorrow with the new country.
-            </p>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" @click="closePopup">Close</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-row>
+          <v-text-field 
+            class="question-input" 
+            v-model="questionInput" 
+            maxlength="100" 
+            label="Ask a True/False Question"
+            placeholder="Is it located in Europe?" 
+            @keyup.enter="sendQuestion"
+            :disabled="remainingQuestions <= 0 || loading || isGameOver"></v-text-field>
+          <v-btn class="sent-btn" style="height: 56px;" @click="sendQuestion" color="primary"
+            :disabled="remainingQuestions <= 0 || loading || isGameOver">
+            Ask
+            <v-icon dark right style="padding-left: 10px;">
+              mdi-send
+            </v-icon>
+          </v-btn>
+        </div>
+        <v-row>
+          <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
+            <v-card outlined :class="getRowClass(entry.answer)" class="pa-4">
+              <v-card-title>{{ entry.question }}</v-card-title>
+              <v-card-subtitle>{{ entry.answer }}</v-card-subtitle>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card>
+
+      <v-card class="pa-4 guess-box">
+        <v-card-title>Make a Guess</v-card-title>
+        <v-card-text>
+          <p>You have {{ remainingGuesses }} guesses remaining.</p>
+          <v-text-field 
+            maxlength="30" 
+            v-model="guessInput" 
+            label="Guess the Country" 
+            placeholder="Enter your guess..."
+            @keyup.enter="sendGuess" 
+            :disabled="remainingGuesses <= 0 || loading || isGameOver"></v-text-field>
+          <v-btn @click="sendGuess" color="primary" :disabled="remainingGuesses <= 0 || loading || isGameOver">
+            Guess
+            <v-icon dark right style="padding-left: 10px;">
+              mdi-magnify
+            </v-icon>
+          </v-btn>
+        </v-card-text>
+        <v-row>
+          <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
+            <v-card outlined :class="getRowClass(entry.response)" class="pa-4">
+              <v-card-title>{{ entry.guess }}</v-card-title>
+              <v-card-subtitle>{{ entry.response }}</v-card-subtitle>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card>
+
+
+    </div>
+    <v-dialog v-model="showPopup" max-width="500">
+      <v-card>
+        <v-card-title class="text-h5">{{ won ? 'Congratulations!' : 'Game Over' }}</v-card-title>
+        <v-card-text>
+          <p v-if="won">
+            Great job! You've guessed the correct country. Keep it up!
+          </p>
+          <p v-else>
+            Don't worry! The solution will be revealed tomorrow with the new country.
+          </p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" @click="closePopup">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -106,12 +113,10 @@ export default defineComponent({
     const guessInput = ref('');
     const showPopup = ref(false);
 
-    // Computed property to reverse the order of the questionsHistory
     const reversedQuestionsHistory = computed(() => {
       return [...questionsHistory.value].reverse();
     });
 
-    // Function to return the appropriate class based on the answer
     const getRowClass = (answer: string) => {
       if (answer === 'True') return 'green-outline';
       if (answer === 'False') return 'red-outline';
@@ -163,15 +168,19 @@ export default defineComponent({
 
 <style scoped>
 .game-page {
-  height: 100vh;
+  height: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .chat-box {
   height: 100%;
+  padding: 20px;
 }
 
 .guess-box {
   height: 100%;
+  padding: 20px;
 }
 
 .chat-log {
@@ -209,6 +218,43 @@ export default defineComponent({
   display: grid;
   grid-template-columns: auto 100px;
   align-items: center;
+
   padding: 15px;
+}
+
+.game-container {
+  display: grid;
+  grid-template-columns: auto 400px;
+  max-width: 1440px;
+  column-gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .game-container {
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto auto;
+    row-gap: 15px;
+  }
+
+  .guess-box {
+    grid-row: 1;
+  }
+
+  .chat-box {
+    grid-row: 2;
+  }
+ 
+  .sent-box {
+    height: max-content;
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto 56px;
+    align-items: center;
+
+    padding: 15px;
+  }
+
 }
 </style>
