@@ -77,7 +77,7 @@ async def my_hisotry(access_token: str = Cookie(None), session: AsyncSession = D
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    return await gcrud.get_player_histiory_for_country(user, daily_country, session)
+    return await gcrud.get_player_histiory_for_today(user, daily_country, session)
     # return UserHistory(user=None,
     #                    questions=[],
     #                    guesses=[])

@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Question, User
 from game.crud import create_guess, create_question
-from .schemas import DailyCountryDisplay, QuestionBase, QuestionDisplay
+from .schemas import DayDisplay, QuestionBase, QuestionDisplay
 
 
-async def ask_question(question: str, daily_country: DailyCountryDisplay, user: User, db: AsyncSession) -> Question:
+async def ask_question(question: str, daily_country: DayDisplay, user: User, db: AsyncSession) -> Question:
     system_prompt = """
     I want you to act as the game master for a country guessing game.
     Player tries to guess a specific country based on 'True' or 'False' answers to their questions.
@@ -98,7 +98,7 @@ async def ask_question(question: str, daily_country: DailyCountryDisplay, user: 
     )
     
     
-async def give_guess(guess: str, daily_country: DailyCountryDisplay, user: User, session: AsyncSession):
+async def give_guess(guess: str, daily_country: DayDisplay, user: User, session: AsyncSession):
     system_prompt = """
     I want you to act as the game master for a country guessing game.
     Player writes country and you have to say True if player guessed the country.

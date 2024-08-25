@@ -4,18 +4,33 @@ from datetime import date, datetime
 
 from users.schemas import UserDisplay
 
-# Country Schema
-class DailyCountryBase(BaseModel):
-    country_name: str
+class CountryBase(BaseModel):
+    name: str
+    official_name: str
+    wiki: str
+    md_file: str
+    
+    class Config:
+        from_attributes = True
+        
+class CountryDisplay(CountryBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
 
-class DailyCountryDisplay(DailyCountryBase):
+# Country Schema
+class DayBase(BaseModel):
+    country_id: int
+
+class DayDisplay(DayBase):
     id: int
     date: date
     
     class Config:
         from_attributes = True
 
-class DailyCountryCreate(DailyCountryBase):
+class DayCreate(DayBase):
     class Config:
         from_attributes = True
 
@@ -51,20 +66,6 @@ class GuessDisplay(GuessBase):
     class Config:
         from_attributes = True
 
-# Daily Usage Schema
-class DailyUsageBase(BaseModel):
-    date: date
-    questions_asked: int
-    guesses_made: int
-
-class DailyUsageCreate(DailyUsageBase):
-    user_id: int
-
-class DailyUsageDisplay(DailyUsageBase):
-    id: int
-
-    class Config:
-        from_attributes = True
 
 class UserHistory(BaseModel):
     user: UserDisplay

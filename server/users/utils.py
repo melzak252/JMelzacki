@@ -3,6 +3,9 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.models import Permission, User
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
@@ -36,3 +39,19 @@ def verify_access_token(token: str):
     except JWTError as e:
         raise credentials_exception
     return username
+
+
+async def add_base_permissions(session: AsyncSession):
+    res = await session.execute(
+        select(Permission).where(Permission.name == "admin")
+    )    
+    
+    permissions = res.scalars().all()
+    
+    if permissions:
+        return
+
+    admin_permission = Permission(name="admin")
+    
+    session.add(admin_permission)
+    await session.commit()

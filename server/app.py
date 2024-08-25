@@ -2,18 +2,19 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordRequestForm
 
+from game.crud import generate_new_day_country, get_today_country, populate_countries
 from users.schemas import UserCreate, UserDisplay
 
 load_dotenv() 
 from fastapi import Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from users.utils import create_access_token, oauth2_scheme
+from users.utils import create_access_token, oauth2_scheme, add_base_permissions
 import users.crud as ucrud
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from sqlalchemy.ext.asyncio import AsyncEngine
-from db import get_db, get_engine
+from db import AsyncSessionLocal, get_db, get_engine
 from db.base import Base
 from db.models import *
 
@@ -28,8 +29,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 scheduler = AsyncIOScheduler()
-    
-# scheduler.add_job(generate_new_country, CronTrigger(hour=0, minute=1))
+ 
+async def generate_country_for_today():   
+    async with AsyncSessionLocal() as session:
+        generate_new_day_country(session=session)
+        
+scheduler.add_job(generate_country_for_today, CronTrigger(hour=0, minute=1))
 
 async def init_models(engine: AsyncEngine):
     async with engine.begin() as conn:
@@ -41,11 +46,15 @@ async def lifespan(app: FastAPI):
     await init_models(engine)
     scheduler.start()
     
-    # async with get_db() as session:
-    #     if not get_today_country(session=session):
-    #         generate_new_country()
-                
+    async with AsyncSessionLocal() as session:
+        await add_base_permissions(session)
+        await populate_countries(session)
+        
+        if await get_today_country(session) is None:
+            await generate_new_day_country(session)
+        
     yield
+    
     scheduler.shutdown()
     await engine.dispose()
 

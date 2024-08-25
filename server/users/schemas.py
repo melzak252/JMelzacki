@@ -1,4 +1,17 @@
+from typing import List
 from pydantic import BaseModel
+
+class PermissionBase(BaseModel):
+    name: str
+    
+    class Config:
+        from_attributes = True
+
+class PermissionDisplay(PermissionBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
 
 class UserCreate(BaseModel):
     username: str
@@ -22,6 +35,7 @@ class UserDisplay(BaseModel):
     id: int
     username: str
     email: str
+    permissions: List[PermissionDisplay]
     
     class Config:
         from_attributes = True

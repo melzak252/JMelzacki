@@ -7,5 +7,6 @@ venv
 node_modules
 
 data/
+postgres/
 
 docker-compose_dev.yml

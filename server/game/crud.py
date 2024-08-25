@@ -1,36 +1,38 @@
 
 from datetime import date
 import random
+import csv
 
 import pycountry
-from db import get_db
-from db.models import DailyCountry, Guess, Question
-from fastapi import HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, or_
+from db.models import Country, DayCountry, Guess, Question
+from sqlalchemy import select
 from db.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from game.schemas import QuestionCreate, UserHistory
+from game.schemas import CountryBase, UserHistory
 
 
-async def generate_new_country(session: AsyncSession):
+async def generate_new_day_country(session: AsyncSession):
+    result = await session.execute(
+        select(Country)
+    )
     
-    countries = list(pycountry.countries)
-    selected_country = random.choice(countries)
+    countries = result.scalars().all()
+    if not countries:
+        raise ValueError("No countries in database!")
     
-    print(f"Type of selected country: {type(selected_country)}")    
+    country = random.choice(countries)
     
-    # Create a new country entry in the database
-    new_country = await create_daily_country(session, selected_country.name)
+    new_country = await create_day_country(session, country)
     
-    print(f"Generated new country for quiz: {selected_country.name}")
+    print(f"Generated new country for quiz: {country.name}")
     return new_country
 
-async def create_daily_country(session: AsyncSession, country_name: str) -> DailyCountry:
-    new_entry = DailyCountry(
-        country_name=country_name
+async def create_day_country(session: AsyncSession, country: Country) -> DayCountry:
+    new_entry = DayCountry(
+        country_id=country.id
     )
+    
     
     session.add(new_entry)
 
@@ -43,15 +45,13 @@ async def create_daily_country(session: AsyncSession, country_name: str) -> Dail
     
     return new_entry
 
-async def get_today_country(session: AsyncSession) -> DailyCountry:
+async def get_today_country(session: AsyncSession) -> DayCountry:
     result = await session.execute(
-        select(DailyCountry).where(DailyCountry.date == date.today()).order_by(DailyCountry.id.desc())
+        select(DayCountry).where(DayCountry.date == date.today()).order_by(DayCountry.id.desc())
     )
-    entity = result.scalars().first()
-    if entity is not None:
-        return entity
     
-    return await generate_new_country(session)
+    return result.scalars().first()
+    
     
     
 async def create_question(question: str, answer: str, user_id: int, country_id: int, explanation: str, session: AsyncSession) -> Question:
@@ -93,7 +93,21 @@ async def create_guess(guess: str, answer: str, user_id: int, country_id: int, s
     
     return new_entry
 
-async def get_player_histiory_for_country(user: User, daily_country: DailyCountry, session: AsyncSession) -> UserHistory:
+async def create_country(country: CountryBase, session: AsyncSession) -> Country:
+    new_entry = Country(**country.model_dump())
+    
+    session.add(new_entry)
+
+    try:
+        await session.commit()  # Commit the transaction
+        await session.refresh(new_entry)  # Refresh the instance to get the ID
+    except Exception as ex:
+        await session.rollback()
+        raise ex
+    
+    return new_entry
+
+async def get_player_histiory_for_today(user: User, daily_country: DayCountry, session: AsyncSession) -> UserHistory:
     questions_result = await session.execute(
         select(Question).where(Question.user_id == user.id, Question.country_id == daily_country.id)
     )
@@ -110,3 +124,38 @@ async def get_player_histiory_for_country(user: User, daily_country: DailyCountr
         questions=questions,
         guesses=guesses
     )
+
+async def populate_countries(session: AsyncSession):
+    result = await session.execute(
+        select(Country)
+    )
+    
+    countries = result.scalars().all()
+    
+    if countries:
+        return
+    
+    with open("data/countries.csv", "r", encoding="utf8") as f:
+        reader = csv.DictReader(f, fieldnames=["name", "official_name", "wiki_page"])
+        next(reader)
+        countries = [
+            Country(
+                name=row["name"],
+                official_name=row["official_name"],
+                wiki=row["wiki_page"],
+                md_file=f"data/pages/{row['name']}.md"
+            ) for row in reader
+        ]
+        print(len(countries))    
+        session.add_all(countries)
+        
+        try:
+            await session.commit()  # Commit the transaction
+            
+        except Exception as ex:
+            await session.rollback()
+            raise ex
+        
+        
+        
+        
