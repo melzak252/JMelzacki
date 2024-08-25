@@ -6,20 +6,20 @@
     <v-row class="justify-center">
       <v-col cols="12" md="8">
         <v-card elevation="10" class="pa-5">
-          <v-card-title class="headline font-weight-bold text-left">
-            Welcome to the Guess Country Game!
+          <v-card-title class="headline font-weight-bold ">
+            Welcome to Countrydle!
           </v-card-title>
           <v-card-text class="py-5">
             <div class="timeline">
               <h2 class="text-h8 font-weight-medium mb-4 timeline-title">
                 How I Built This Website
               </h2>
-              <v-timeline align-top dense>
+              <v-timeline density="compact">
                 <v-timeline-item v-for="(item, index) in completedItems" :key="index" :color="item.color" small
-                  fill-dot>
-                  <v-card flat>
-                    <v-card-title>{{ item.title }}</v-card-title>
-                    <v-card-subtitle>{{ item.subtitle }}</v-card-subtitle>
+                  size="30px" class="timeline-card">
+                  <v-card flat d>
+                    <v-card-title class="timeline-card-title">{{ item.title }}</v-card-title>
+                    <v-card-subtitle class="timeline-card-subtitle">{{ item.subtitle }}</v-card-subtitle>
                   </v-card>
                 </v-timeline-item>
               </v-timeline>
@@ -28,11 +28,12 @@
               <h2 class="text-h8 font-weight-medium mb-4 timeline-title">
                 Future improvements
               </h2>
-              <v-timeline align-top dense>
-                <v-timeline-item v-for="(item, index) in plannedItems" :key="index" :color="item.color" small fill-dot>
+              <v-timeline density="compact">
+                <v-timeline-item v-for="(item, index) in plannedItems" :key="index" :color="item.color" size="30px"
+                  class="timeline-item-elem">
                   <v-card flat>
-                    <v-card-title>{{ item.title }}</v-card-title>
-                    <v-card-subtitle>{{ item.subtitle }}</v-card-subtitle>
+                    <v-card-title class="timeline-card-title">{{ item.title }}</v-card-title>
+                    <v-card-subtitle class="timeline-card-subtitle">{{ item.subtitle }}</v-card-subtitle>
                   </v-card>
                 </v-timeline-item>
               </v-timeline>
@@ -43,7 +44,7 @@
                 <h2 class="text-h5 font-weight-medium mb-4">
                   How to Play:
                 </h2>
-                <v-card class="pa-3" outlined>
+                <v-card class="pa-3" variant="tonal">
                   <v-card-title class="text-h6 font-weight-bold">
                     Objective
                   </v-card-title>
@@ -51,7 +52,7 @@
                     Guess the country by asking up to 10 true/false questions and making up to 3 guesses.
                   </v-card-text>
                 </v-card>
-                <v-card class="pa-3 mt-3" outlined>
+                <v-card class="pa-3 mt-3" variant="tonal">
                   <v-card-title class="text-h6 font-weight-bold">
                     Step 1: Log In
                   </v-card-title>
@@ -61,7 +62,7 @@
                     Once registered, log in to access the game.
                   </v-card-text>
                 </v-card>
-                <v-card class="pa-3 mt-3" outlined>
+                <v-card class="pa-3 mt-3" variant="tonal">
                   <v-card-title class="text-h6 font-weight-bold">
                     Step 2: Ask Questions
                   </v-card-title>
@@ -69,7 +70,7 @@
                     You can ask up to 10 true/false questions to narrow down the possibilities.
                   </v-card-text>
                 </v-card>
-                <v-card class="pa-3 mt-3" outlined>
+                <v-card class="pa-3 mt-3" variant="tonal">
                   <v-card-title class="text-h6 font-weight-bold">
                     Step 3: Make Guesses
                   </v-card-title>
@@ -77,7 +78,7 @@
                     You have 3 attempts to guess the correct country. Use your questions wisely!
                   </v-card-text>
                 </v-card>
-                <v-card class="pa-3 mt-3" outlined>
+                <v-card class="pa-3 mt-3" variant="tonal">
                   <v-card-title class="text-h6 font-weight-bold">
                     Step 4: Win!
                   </v-card-title>
@@ -105,7 +106,7 @@ export default {
         { title: "Creating API in FastAPI", subtitle: "Developed backend API using FastAPI", color: "green" },
         { title: "Adding PostgreSQL Database", subtitle: "Integrated PostgreSQL for data storage", color: "blue" },
         { title: "OpenAI Integration", subtitle: "Incorporated OpenAI for main game functionality", color: "red" },
-        { title: "Creating Frontend in Vue3 TS", subtitle: "Developed the frontend using Vue 3 and TypeScript", color: "orange" },
+        { title: "Creating Frontend in Vue3.ts", subtitle: "Developed the frontend using Vue 3 and TypeScript", color: "orange" },
         { title: "Containerization with Docker", subtitle: "Containerized all services using Docker Compose, managed by an Nginx container", color: "purple" },
         { title: "Hosting on Linode", subtitle: "Deployed on a Debian 11 server at Linode", color: "brown" }
       ],
@@ -119,6 +120,44 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.timeline-card-subtitle {
+  text-wrap: wrap;
+  width: 100%;
+  padding-right: 15px;
+}
+
+
+.timeline-title {
+  text-align: center;
+  padding-right: 2rem;
+}
+
+@media (max-width: 500px) {
+  .timeline-item-elem {
+    width: 100%;
+  }
+
+  .timeline-card-title {
+    font-size: small;
+    text-wrap: wrap;
+    padding: 5px;
+    width: 100%;
+  }
+
+  .timeline-card-subtitle {
+    display: none;
+  }
+
+
+  .timeline-title {
+    text-align: left;
+  }
+
+
+}
+</style>
 
 <style>
 .v-timeline--vertical.v-timeline .v-timeline-item:nth-child(2n) .v-timeline-item__body {
@@ -135,10 +174,6 @@ export default {
   /* Align text to the left */
 }
 
-.timeline-title {
-  text-align: center;
-  padding-right: 2rem;
-}
 
 .v-timeline-item .v-card-title,
 .v-timeline-item .v-card-subtitle,
