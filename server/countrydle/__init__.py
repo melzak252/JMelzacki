@@ -3,11 +3,11 @@ from fastapi import APIRouter, Body, Cookie, Depends, HTTPException, status
 import pycountry
 
 from db.models import User
-import game.utils as gutils
+import countrydle.utils as gutils
 from .schemas import GuessBase, GuessDisplay, QuestionBase, QuestionDisplay, UserHistory
 from db import get_db
 from fastapi import APIRouter
-import game.crud as gcrud
+import countrydle.crud as gcrud
 import users.crud as ucrud
 from users.utils import oauth2_scheme, verify_access_token
 from sqlalchemy.ext.asyncio import AsyncSession

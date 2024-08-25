@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordRequestForm
 
-from game.crud import generate_new_day_country, get_today_country, populate_countries
+from countrydle.crud import generate_new_day_country, get_today_country, populate_countries
 from users.schemas import UserCreate, UserDisplay
 
 load_dotenv() 
@@ -24,7 +24,7 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from users import router as users_router
-from game import router as game_router
+from countrydle import router as countrydle_router
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 
@@ -68,7 +68,7 @@ app.add_middleware(
 )
 
 app.include_router(users_router, prefix="/users", tags=["users"])
-app.include_router(game_router, prefix="/game", tags=["game"])
+app.include_router(countrydle_router, prefix="/cuntrydle", tags=["countrydle"])
 
 @app.get("/")
 async def root():

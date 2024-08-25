@@ -4,7 +4,7 @@ from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Question, User
-from game.crud import create_guess, create_question
+from countrydle.crud import create_guess, create_question
 from .schemas import DayDisplay, QuestionBase, QuestionDisplay
 
 

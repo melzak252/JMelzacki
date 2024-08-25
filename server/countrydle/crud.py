@@ -9,7 +9,7 @@ from sqlalchemy import select
 from db.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from game.schemas import CountryBase, UserHistory
+from countrydle.schemas import CountryBase, UserHistory
 
 
 async def generate_new_day_country(session: AsyncSession):
