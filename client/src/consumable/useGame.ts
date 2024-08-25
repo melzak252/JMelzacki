@@ -23,7 +23,7 @@ export function useGame() {
             error.value = null;
 
             try {
-                const response = await axios.post(`${config.apiUrl}/game/question`, { question: question },
+                const response = await axios.post(`${config.apiUrl}/countrydle/question`, { question: question },
                     {
                         withCredentials: true
                     });
@@ -45,7 +45,7 @@ export function useGame() {
         try {
             loading.value = true;
             error.value = null;
-            const response = await axios.get(`${config.apiUrl}/game/history`,
+            const response = await axios.get(`${config.apiUrl}/countrydle/history`,
                 {
                     withCredentials: true
                 });
@@ -75,7 +75,7 @@ export function useGame() {
 
             try {
                 // Simulate an API call to check if the guess is correct
-                const res = await axios.post(`${config.apiUrl}/game/guess`, { guess: guess },
+                const res = await axios.post(`${config.apiUrl}/countrydle/guess`, { guess: guess },
                     {
                         withCredentials: true
                     });
