@@ -5,9 +5,10 @@ sqlalchemy
 langchain
 openai
 python-dotenv
-pycountry
 bcrypt==4.0.1
 python-jose[cryptography] 
 passlib
 python-multipart
 apscheduler
+qdrant-client
+pgvector

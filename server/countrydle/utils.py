@@ -3,19 +3,34 @@ import json
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Question, User
+from db.models import Country, DayCountry, Question, User
 from countrydle.crud import create_guess, create_question
-from .schemas import DayDisplay, QuestionBase, QuestionDisplay
+from qdrant.utils import get_fragments_matching_question
+from qdrant import COLLECTION_NAME
+from db.schemas.country import DayCountryDisplay
 
+async def ask_question(
+    question: str, day_country: DayCountry, user: User, session: AsyncSession
+) -> Question:
 
-async def ask_question(question: str, daily_country: DayDisplay, user: User, db: AsyncSession) -> Question:
-    system_prompt = """
+    fragments = get_fragments_matching_question(
+        question, day_country, COLLECTION_NAME, session
+    )
+    context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
+    country: Country = day_country.country
+
+    system_prompt = f"""
     I want you to act as the game master for a country guessing game.
     Player tries to guess a specific country based on 'True' or 'False' answers to their questions.
     
     Answer questions True or False if you are fully confident of the answer.
     Answer question NA if you do not know answer for that question.
     Answer question Error if questions is not True/False question.
+    
+    Country to guess: {country.name}
+    ### Country additional information:
+    {context}
+    ###
     
     ### Task
     You are answering the question with your best knowledge.
@@ -26,7 +41,7 @@ async def ask_question(question: str, daily_country: DayDisplay, user: User, db:
     }}
     ### 
     
-    ### Examples
+    ### Examples of answers
     Country: France. Question: Is your country known for its wines?
     {{
         "answer": "True",
@@ -57,22 +72,20 @@ async def ask_question(question: str, daily_country: DayDisplay, user: User, db:
         "explanation": "I don't have current information to answer that question."
     }}
     
-    
     Country: Chad. Question: ascap aso ndosiqn pa anjd
     {{
         "answer": "NA",
         "explanation": "Cannot understand the question!"
     }}
     """
-    
-    question_prompt = f"Country: {daily_country.country_name}. Question: {question}"
+    question_prompt = f"""Question: {question}"""
 
     prompts = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": question_prompt},
     ]
     model = os.getenv("QUIZ_MODEL")
-    
+
     client = OpenAI()
     response = client.chat.completions.create(
         model=model,
@@ -87,18 +100,21 @@ async def ask_question(question: str, daily_country: DayDisplay, user: User, db:
     except json.JSONDecodeError:
         print(answer)
         raise
-    
+
     return await create_question(
-        user_id = user.id,
-        country_id = daily_country.id,
-        question = question,
-        answer = answer_dict["answer"],
-        explanation = answer_dict["explanation"],
-        session=db
+        user_id=user.id,
+        country_id=day_country.id,
+        question=question,
+        answer=answer_dict["answer"],
+        explanation=answer_dict["explanation"],
+        context=context,
+        session=session,
     )
-    
-    
-async def give_guess(guess: str, daily_country: DayDisplay, user: User, session: AsyncSession):
+
+
+async def give_guess(
+    guess: str, daily_country: DayCountryDisplay, user: User, session: AsyncSession
+):
     system_prompt = """
     I want you to act as the game master for a country guessing game.
     Player writes country and you have to say True if player guessed the country.
@@ -157,7 +173,7 @@ async def give_guess(guess: str, daily_country: DayDisplay, user: User, session:
         "answer": "NA"
     } # False because player tried to cheat. He can ask one guess at a time.
     """
-    
+
     guess_prompt = f"Country: {daily_country.country_name}. Guess: {guess}"
 
     prompts = [
@@ -165,7 +181,7 @@ async def give_guess(guess: str, daily_country: DayDisplay, user: User, session:
         {"role": "user", "content": guess_prompt},
     ]
     model = os.getenv("QUIZ_MODEL")
-    
+
     client = OpenAI()
     response = client.chat.completions.create(
         model=model,
@@ -180,11 +196,11 @@ async def give_guess(guess: str, daily_country: DayDisplay, user: User, session:
     except json.JSONDecodeError:
         print(answer)
         raise
-    
+
     return await create_guess(
-        user_id = user.id,
-        country_id = daily_country.id,
+        user_id=user.id,
+        country_id=daily_country.id,
         guess=guess,
-        answer = answer_dict["answer"],
-        session=session
+        answer=answer_dict["answer"],
+        session=session,
     )

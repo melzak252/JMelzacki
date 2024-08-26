@@ -4,9 +4,12 @@ __pychache__/
 venv
 .venv
 
+.vscode
+
 node_modules
 
 data/
-postgres/
+postgres_data/
+qdrant_data/
 
 docker-compose_dev.yml

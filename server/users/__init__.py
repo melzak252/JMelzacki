@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Cookie
-from .schemas import UserDisplay
 from db import get_db
 from db.models import User
-from fastapi import APIRouter, Depends, HTTPException
+from db.schemas.user import UserDisplay
+from dotenv import load_dotenv
+from fastapi import APIRouter, Cookie, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from .schemas import UserDisplay
-from .utils import verify_access_token, oauth2_scheme
+
 import users.crud as ucrud
 
+from .utils import verify_access_token
+
+load_dotenv()
 router = APIRouter()
 
 @router.get("/me", response_model=UserDisplay)
