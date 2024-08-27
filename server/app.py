@@ -1,53 +1,80 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
-from fastapi.security import OAuth2PasswordRequestForm
 
-from users.schemas import UserCreate, UserDisplay
-
-load_dotenv() 
-from fastapi import Depends, HTTPException, status, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from users.utils import create_access_token, oauth2_scheme
 import users.crud as ucrud
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-
-from sqlalchemy.ext.asyncio import AsyncEngine
-from db import get_db, get_engine
+from countrydle import router as countrydle_router
+from countrydle.crud import populate_countries
+from db import AsyncSessionLocal, get_db, get_engine
 from db.base import Base
-from db.models import *
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from fastapi import FastAPI, status
+from db.models import *  # noqa: F403
+from db.repositories.countrydle import CountrydleRepository
+from db.repositories.user import UserRepository
+from db.schemas.user import UserCreate, UserDisplay
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.security import OAuth2PasswordRequestForm
+from qdrant import close_qdrant_client, init_qdrant
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from users import router as users_router
-from game import router as game_router
-from sqlalchemy.ext.asyncio import AsyncEngine
+from users.utils import create_access_token
 
+load_dotenv()
 
 scheduler = AsyncIOScheduler()
-    
-# scheduler.add_job(generate_new_country, CronTrigger(hour=0, minute=1))
+
+
+async def generate_country_for_today():
+    async with AsyncSessionLocal() as session:
+        CountrydleRepository(session).generate_new_day_country(session=session)
+
+
+scheduler.add_job(generate_country_for_today, CronTrigger(hour=0, minute=1))
+
 
 async def init_models(engine: AsyncEngine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+        logging.info("Database connection established and models created.")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = get_engine()
-    await init_models(engine)
-    scheduler.start()
-    
-    # async with get_db() as session:
-    #     if not get_today_country(session=session):
-    #         generate_new_country()
-                
-    yield
-    scheduler.shutdown()
-    await engine.dispose()
+    try:
+        await init_models(engine)
+        scheduler.start()
+
+        async with AsyncSessionLocal() as session:
+            await ucrud.add_base_permissions(session)
+            await populate_countries(session)
+            await init_qdrant(session)
+
+            c_repo = CountrydleRepository(session)
+            if await c_repo.get_today_country() is None:
+                await c_repo.generate_new_day_country()
+
+        yield
+    except ConnectionRefusedError:
+        logging.error("Exiting application due to database connection failure.")
+        await asyncio.sleep(10)
+        raise
+    except Exception as e:
+        logging.error("Exiting application due to error.")
+        raise e
+    finally:
+        try:
+            logging.info("Shutting down application...")
+            scheduler.shutdown(wait=True)
+            close_qdrant_client()
+            await engine.dispose()
+            logging.info("Application shutdown complete.")
+        except Exception as e:
+            logging.error(f"Error during shutdown: {e}")
+
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
@@ -59,21 +86,29 @@ app.add_middleware(
 )
 
 app.include_router(users_router, prefix="/users", tags=["users"])
-app.include_router(game_router, prefix="/game", tags=["game"])
+app.include_router(countrydle_router, prefix="/cuntrydle", tags=["countrydle"])
+
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Game API!"}
 
+
 @app.post("/login")
-async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    user: User = await ucrud.get_user(form_data.username, db)
-    
-    if not user or not User.verify_password(form_data.password, user.hashed_password):
+async def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: AsyncSession = Depends(get_db),
+):
+    user = await UserRepository(session).get_user(form_data.username)
+
+    if not user or not UserRepository.verify_password(
+        form_data.password, user.hashed_password
+    ):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    
+
     access_token = create_access_token(data={"sub": user.username})
-    
+
     response.set_cookie(
         key="access_token",
         value=access_token,  # No 'Bearer' prefix needed
@@ -82,7 +117,11 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         samesite="Lax",
         path="/",
     )
-    return {"access_token": access_token, "username": user.username, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "username": user.username,
+        "token_type": "bearer",
+    }
 
 
 @app.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -90,6 +129,7 @@ async def logout(response: Response):
     response.delete_cookie(key="access_token")
     return {"message": "Successfully logged out"}
 
+
 @app.post("/register", response_model=UserDisplay)
-async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    return await ucrud.register_user(user=user, session=db)
+async def register(user: UserCreate, session: AsyncSession = Depends(get_db)):
+    return await UserRepository(session).register_user(user=user)

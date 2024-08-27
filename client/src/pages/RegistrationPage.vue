@@ -1,10 +1,10 @@
 <template>
-  <v-alert type="error" dense prominent color="red" dark>
-    Registration is currently closed.
-  </v-alert>
-  <v-container>
 
-    <v-form @submit.prevent="submitRegistration">
+  <v-container>
+    <v-alert border="top" type="warning" variant="outlined" prominent class="registration-alert">
+      Registration is currently closed.
+    </v-alert>
+    <v-form @submit.prevent="submitRegistration" class="my-5">
       <v-text-field v-model="username" label="Username" required disabled></v-text-field>
 
       <v-text-field v-model="email" label="Email" type="email" required disabled></v-text-field>

@@ -3,8 +3,10 @@
   <v-app>
     <v-app-bar app>
       <v-toolbar-title>Country Guessing Game</v-toolbar-title>
-      <v-spacer></v-spacer>
+      <v-spacer class="menu-spacer">
+      </v-spacer>
       <v-btn to="/">Home</v-btn>
+      <v-btn to="/portfolio">Portfolio</v-btn>
       <v-btn to="/aboutme">About Me</v-btn>
       <template v-if="!isAuthenticated">
         <v-btn to="/login">Login</v-btn>
@@ -16,7 +18,7 @@
         <span style="padding: 20px;"> {{ user?.username }}</span>
       </template>
     </v-app-bar>
-    
+
     <v-main>
       <v-container>
         <router-view /> <!-- This will display the current route component -->
@@ -52,3 +54,16 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.menu-spacer {
+  display: flex;
+}
+
+.registration-alert {
+  padding: 0 !important;
+  font-size: small !important;
+  max-width: 500px !important;
+  margin-left: 25%;
+}
+</style>
