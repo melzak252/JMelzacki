@@ -4,16 +4,18 @@ from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, DayCountry, Question, User
-from countrydle.crud import create_guess, create_question
 from qdrant.utils import get_fragments_matching_question
 from qdrant import COLLECTION_NAME
 from db.schemas.country import DayCountryDisplay
+from db.repositories.countrydle import CountrydleRepository
+from db.schemas.countrydle import GuessCreate, QuestionCreate
+
 
 async def ask_question(
     question: str, day_country: DayCountry, user: User, session: AsyncSession
 ) -> Question:
 
-    fragments = get_fragments_matching_question(
+    fragments = await get_fragments_matching_question(
         question, day_country, COLLECTION_NAME, session
     )
     context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
@@ -101,15 +103,15 @@ async def ask_question(
         print(answer)
         raise
 
-    return await create_question(
+    question_create = QuestionCreate(
         user_id=user.id,
         country_id=day_country.id,
         question=question,
         answer=answer_dict["answer"],
         explanation=answer_dict["explanation"],
         context=context,
-        session=session,
     )
+    return await CountrydleRepository(session).create_question(question_create)
 
 
 async def give_guess(
@@ -197,10 +199,10 @@ async def give_guess(
         print(answer)
         raise
 
-    return await create_guess(
-        user_id=user.id,
-        country_id=daily_country.id,
+    guess_create = GuessCreate(
         guess=guess,
-        answer=answer_dict["answer"],
-        session=session,
+        day_id=daily_country.id,
+        user_id=user.id,
+        response=answer_dict["answer"],
     )
+    return await CountrydleRepository(session).create_guess(guess_create)

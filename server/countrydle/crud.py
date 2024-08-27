@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 async def populate_countries(session: AsyncSession):
     c_rep = CountryRepository(session)
-    countries = await c_rep.get_all_countries(session)
+    countries = await c_rep.get_all_countries()
 
     if countries:
         return

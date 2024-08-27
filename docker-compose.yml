@@ -38,13 +38,17 @@ services:
       POSTGRES_PASSWORD: root
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./databases/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./databases/postgres/init.sql:/docker-entrypoint-initdb.d/a_init.sql
+      - ./databases/postgres/countries_dump.sql:/docker-entrypoint-initdb.d/countries_dump_countries.sql
+      - ./databases/postgres/countries_dump_docs.sql:/docker-entrypoint-initdb.d/countries_dump_docs.sql
+      - ./databases/postgres/countries_dump_frag.sql:/docker-entrypoint-initdb.d/countries_dump_frag.sql
       - ./backups:/backups
     ports:
       - "5432:5432"
   backend:
     container_name: server
-    build: ./server   # Specify the build context for the backend (server)
+    build: ./server
+    restart: always
     ports:
       - "8080:8080"
     depends_on:
@@ -64,11 +68,12 @@ services:
       - EMBEDDING_SIZE=1536
     volumes:
       - ./data:/usr/src/app/data
+      - ./databases/qdrant/snapshots:/qdrant/snapshots
   frontend:
     container_name: client
-    build: ./client   # Specify the build context for the frontend (client)
+    build: ./client
     ports:
       - "5173:80"
     depends_on:
-      - backend         # Ensure the client waits for the backend to be available
+      - backend
 

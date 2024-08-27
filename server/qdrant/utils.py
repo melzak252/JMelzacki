@@ -1,13 +1,15 @@
 from typing import List
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from db.models import DayCountry, Fragment
+from db.repositories.document import FragmentRepository
 from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import FieldCondition, Filter, MatchValue
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import DayCountry, Fragment
-import countrydle.crud as ccrud
+
 from .vectorize import get_embedding
-from qdrant_client.http.exceptions import UnexpectedResponse
 
 
 def split_document(content: str) -> List[Document]:
@@ -54,7 +56,7 @@ def search_matches(
     return search_result
 
 
-def get_fragments_matching_question(
+async def get_fragments_matching_question(
     question: str, day: DayCountry, collection_name: str, session: AsyncSession
 ) -> list[Fragment]:
     query = question
@@ -66,10 +68,10 @@ def get_fragments_matching_question(
         country_id=day.country_id,
     )
     points.sort(key=lambda x: int(x.id))
-
+    f_repo = FragmentRepository(session)
     fragments = []
     for point in points:
-        fragment = ccrud.get_fragment(int(point.id), session)
+        fragment = await f_repo.get(int(point.id))
         fragments.append(fragment)
 
     return fragments

@@ -1,12 +1,15 @@
+import asyncio
 import logging
 import os
 from pathlib import Path
 from typing import List
 
-import countrydle.crud as ccrud
 from db.models import Country, Document, Fragment
+from db.repositories.country import CountryRepository
+from db.repositories.document import DocumentRepository, FragmentRepository
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.models import Distance, PointStruct, VectorParams
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,7 +34,15 @@ async def init_qdrant(session: AsyncSession):
     snapshot_path = Path("/qdrant/snapshots/countries/countries-base.snapshot")
     if snapshot_path.exists():
         print("Loading QDRANT snapshot!")
-        client.recover_snapshot(COLLECTION_NAME, location=snapshot_path)
+        try:
+            client.recover_snapshot(COLLECTION_NAME, location=f"file://{snapshot_path}")
+        except ResponseHandlingException:
+            tries = 5
+            interval = 5
+            for _ in range(tries):
+                if client.collection_exists(COLLECTION_NAME):
+                    return
+                await asyncio.sleep(interval)
         return
 
     client.create_collection(
@@ -43,12 +54,15 @@ async def init_qdrant(session: AsyncSession):
 
 
 async def populate_qdrant(session: AsyncSession):
-    countries: List[Country] = await ccrud.get_all_countries(session)
+    d_repo = DocumentRepository(session)
+    c_repo = CountryRepository(session)
+    f_repo = FragmentRepository(session)
+    countries: List[Country] = await c_repo.get_all_countries()
     num_c = len(countries)
     for i, country in enumerate(countries):
         logging.info(f"Country {i+1}/{num_c}: {country.name}")
-        doc: Document = await ccrud.get_doc_for_country(country.id, session)
-        fragments: List[Fragment] = await ccrud.get_fragments(doc.id, session)
+        doc: Document = await d_repo.get_doc_for_country(country.id)
+        fragments: List[Fragment] = await f_repo.get_fragments_for_doc(doc.id)
         ids = [fragment.id for fragment in fragments]
         points = []
 

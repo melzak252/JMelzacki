@@ -45,7 +45,7 @@ class CountrydleRepository:
         return new_entry
 
     async def generate_new_day_country(self) -> DayCountry:
-        countries = CountryRepository(self.session).get_all_countries()
+        countries = await CountryRepository(self.session).get_all_countries()
         if not countries:
             raise ValueError("No countries in database!")
 

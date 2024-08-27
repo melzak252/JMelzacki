@@ -1,4 +1,3 @@
-
 import asyncio
 import logging
 from contextlib import asynccontextmanager
@@ -35,52 +34,46 @@ async def generate_country_for_today():
 
 scheduler.add_job(generate_country_for_today, CronTrigger(hour=0, minute=1))
 
-RETRY_LIMIT = 5  # Number of times to retry the connection
-RETRY_DELAY = 5  # Seconds to wait before each retry
-
 
 async def init_models(engine: AsyncEngine):
-    retries = 0
-    while retries < RETRY_LIMIT:
-        logging.info(f"Database connecting {retries} try.")
-
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            logging.info("Database connection established and models created.")
-
-            break
-        except ConnectionRefusedError as e:
-            retries += 1
-            logging.warning(
-                f"Database connection failed. Retrying {retries}/{RETRY_LIMIT}... Error: {e}"
-            )
-            await asyncio.sleep(RETRY_DELAY)
-    else:
-        logging.error("Could not connect to the database after multiple retries.")
-        raise RuntimeError("Database initialization failed after multiple retries.")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        logging.info("Database connection established and models created.")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = get_engine()
-    await init_models(engine)
-    scheduler.start()
+    try:
+        await init_models(engine)
+        scheduler.start()
 
-    async with AsyncSessionLocal() as session:
-        await ucrud.add_base_permissions(session)
-        await populate_countries(session)
-        await init_qdrant(session)
+        async with AsyncSessionLocal() as session:
+            await ucrud.add_base_permissions(session)
+            await populate_countries(session)
+            await init_qdrant(session)
 
-        c_repo = CountrydleRepository(session)
-        if await c_repo.get_today_country() is None:
-            await c_repo.generate_new_day_country()
+            c_repo = CountrydleRepository(session)
+            if await c_repo.get_today_country() is None:
+                await c_repo.generate_new_day_country()
 
-    yield
-
-    close_qdrant_client()
-    scheduler.shutdown()
-    await engine.dispose()
+        yield
+    except ConnectionRefusedError:
+        logging.error("Exiting application due to database connection failure.")
+        await asyncio.sleep(10)
+        raise
+    except Exception as e:
+        logging.error("Exiting application due to error.")
+        raise e
+    finally:
+        try:
+            logging.info("Shutting down application...")
+            scheduler.shutdown(wait=True)
+            close_qdrant_client()
+            await engine.dispose()
+            logging.info("Application shutdown complete.")
+        except Exception as e:
+            logging.error(f"Error during shutdown: {e}")
 
 
 app = FastAPI(lifespan=lifespan)
@@ -109,7 +102,9 @@ async def login(
 ):
     user = await UserRepository(session).get_user(form_data.username)
 
-    if not user or not UserRepository.verify_password(form_data.password, user.hashed_password):
+    if not user or not UserRepository.verify_password(
+        form_data.password, user.hashed_password
+    ):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     access_token = create_access_token(data={"sub": user.username})
