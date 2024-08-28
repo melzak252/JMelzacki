@@ -28,7 +28,7 @@ export function useAuth() {
     isAuthenticated.value = false;
     user.value = null;
 
-    await axios.post(`${config.apiUrl}/api/logout`, {},
+    await axios.post(`${config.apiUrl}/logout`, {},
       {
         withCredentials: true
       });
