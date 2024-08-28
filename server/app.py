@@ -111,7 +111,7 @@ async def login(
 
     response.set_cookie(
         key="access_token",
-        value=access_token,  # No 'Bearer' prefix needed
+        value=access_token,
         httponly=True,
         secure=True,  # Set to True in production
         samesite="Lax",
@@ -126,7 +126,7 @@ async def login(
 
 @app.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response):
-    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="access_token", path="/", domain="jmelzacki.com")
     return {"message": "Successfully logged out"}
 
 
