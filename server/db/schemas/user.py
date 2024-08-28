@@ -42,7 +42,6 @@ class UserDisplay(BaseModel):
     id: int
     username: str
     email: str
-    permissions: List[PermissionDisplay]
 
     class Config:
         from_attributes = True

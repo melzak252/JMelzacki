@@ -55,11 +55,10 @@ export default {
         { title: "OpenAI Integration", subtitle: "Incorporated OpenAI for main game functionality", color: "red" },
         { title: "Creating Frontend in Vue3.ts", subtitle: "Developed the frontend using Vue 3 and TypeScript", color: "orange" },
         { title: "Containerization with Docker", subtitle: "Containerized all services using Docker Compose, managed by an Nginx container", color: "purple" },
-        { title: "Hosting on Linode", subtitle: "Deployed on a Debian 11 server at Linode", color: "brown" }
+        { title: "Hosting on Linode", subtitle: "Deployed on a Debian 11 server at Linode", color: "brown" },
+        { title: "Qdrant RAG Enhancing", subtitle: "Integrate Qdrant to enhance data retrieval for creating context for country quiz ", color: "cyan" },
       ],
       plannedItems: [
-        { title: "Add Qdrant Database", subtitle: "Integrate Qdrant to enhance data retrieval for creating context for country quiz ", color: "cyan" },
-        { title: "Open Registration", subtitle: "After secure all endpoints I will open registration page!", color: "white" },
         { title: "Add Email Verification", subtitle: "Implement email verification for new users", color: "light-green" },
         { title: "More Visual Updates", subtitle: "Plan for ongoing improvements in UI/UX", color: "pink" }
       ]

@@ -86,7 +86,7 @@ app.add_middleware(
 )
 
 app.include_router(users_router, prefix="/users", tags=["users"])
-app.include_router(countrydle_router, prefix="/cuntrydle", tags=["countrydle"])
+app.include_router(countrydle_router, tags=["countrydle"])
 
 
 @app.get("/")

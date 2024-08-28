@@ -28,6 +28,12 @@ client: QdrantClient = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 
 async def init_qdrant(session: AsyncSession):
+    if not client.collection_exists("questions"):
+        client.create_collection(
+            collection_name="questions",
+            vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),
+        )
+
     if client.collection_exists(COLLECTION_NAME):
         return
 

@@ -8,6 +8,8 @@ import '@mdi/font/css/materialdesignicons.css'; // Material Design Icons
 
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
+import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
 const vuetify = createVuetify({
     theme: {
@@ -29,7 +31,12 @@ const vuetify = createVuetify({
     components,
     directives,
   });
+
+const pinia = createPinia();
+pinia.use(piniaPluginPersistedstate); // Register the persistence plugin
+
 createApp(App)
   .use(router)  // Use the router
+  .use(pinia)
   .use(vuetify) // Use Vuetify
   .mount('#app');

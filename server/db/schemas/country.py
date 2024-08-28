@@ -13,8 +13,10 @@ class CountryBase(BaseModel):
         from_attributes = True
 
 
-class CountryDisplay(CountryBase):
+class CountryDisplay(BaseModel):
     id: int
+    name: str
+    official_name: str
 
     class Config:
         from_attributes = True

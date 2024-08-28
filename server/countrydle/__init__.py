@@ -1,8 +1,10 @@
 from db import get_db
 from db.models import User
 from db.repositories.countrydle import CountrydleRepository
-from db.repositories.user import UserRepository
 from db.schemas.countrydle import (
+    CountrydleEndState,
+    CountrydleState,
+    FullUserHistory,
     GuessBase,
     GuessDisplay,
     QuestionBase,
@@ -10,33 +12,67 @@ from db.schemas.countrydle import (
     UserHistory,
 )
 from dotenv import load_dotenv
-from fastapi import APIRouter, Cookie, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from users.utils import verify_access_token
+from users.utils import get_current_user
 
 import countrydle.utils as gutils
 
 load_dotenv()
 
-router = APIRouter()
+router = APIRouter(prefix="/countrydle")
+
+
+@router.get("/state", response_model=CountrydleState)
+async def get_state(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    daily_country = await CountrydleRepository(session).get_today_country()
+
+    game_state = await CountrydleRepository(session).get_game_state(user, daily_country)
+    return game_state
+
+
+@router.get("/end", response_model=CountrydleEndState)
+async def get_end_state(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    daily_country = await CountrydleRepository(session).get_today_country()
+
+    if not await CountrydleRepository(session).is_player_game_over(user, daily_country):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The player is still playing the game!",
+        )
+
+    end_state = await CountrydleRepository(session).get_end_game_state(
+        user, daily_country
+    )
+
+    return end_state
 
 
 @router.post("/guess", response_model=GuessDisplay)
 async def get_game(
     guess: GuessBase,
-    access_token: str = Cookie(None),
+    user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
     daily_country = await CountrydleRepository(session).get_today_country()
 
-    username = verify_access_token(access_token)
-    user: User = await UserRepository(session).get_user(username)
-
-    if not user:
+    if (
+        len(
+            await CountrydleRepository(session).get_guesses_for_user_day(
+                user, daily_country
+            )
+        )
+        >= 3
+    ):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User cannot guess more times than 3!",
         )
 
     return await gutils.give_guess(
@@ -47,19 +83,28 @@ async def get_game(
 @router.post("/question", response_model=QuestionDisplay)
 async def ask_question(
     question: QuestionBase,
-    access_token: str = Cookie(None),
+    user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
     daily_country = await CountrydleRepository(session).get_today_country()
 
-    username = verify_access_token(access_token)
-    user: User = await UserRepository(session).get_user(username)
-
-    if not user:
+    if await CountrydleRepository(session).is_player_game_over(user, daily_country):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User finished the game already!",
+        )
+
+    if (
+        len(
+            await CountrydleRepository(session).get_questions_for_user_day(
+                user, daily_country
+            )
+        )
+        >= 10
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User cannot ask more questions than 10!",
         )
 
     return await gutils.ask_question(
@@ -70,21 +115,28 @@ async def ask_question(
     )
 
 
-@router.get("/history", response_model=UserHistory)
-async def my_hisotry(
-    access_token: str = Cookie(None), session: AsyncSession = Depends(get_db)
+@router.get("/result", response_model=FullUserHistory)
+async def player_result(
+    user: User = Depends(get_current_user), session: AsyncSession = Depends(get_db)
 ):
     daily_country = await CountrydleRepository(session).get_today_country()
 
-    username = verify_access_token(access_token)
-    user: User = await UserRepository(session).get_user(username)
-    if not user:
+    if not CountrydleRepository(session).is_player_game_over(user, daily_country):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Player is still playing the game!",
         )
 
+    return await CountrydleRepository(session).get_player_full_histiory_for_today(
+        user, daily_country
+    )
+
+
+@router.get("/history", response_model=UserHistory)
+async def my_hisotry(
+    user: User = Depends(get_current_user), session: AsyncSession = Depends(get_db)
+):
+    daily_country = await CountrydleRepository(session).get_today_country()
     return await CountrydleRepository(session).get_player_histiory_for_today(
         user, daily_country
     )

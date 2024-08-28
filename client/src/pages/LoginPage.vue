@@ -22,7 +22,7 @@
   
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
-  import { login as loginApi } from '../services/auth';
+  import { apiService } from '../services/api';
   import { useAuth } from '../consumable/useAuth';
   import { useRouter } from 'vue-router';
   
@@ -37,7 +37,7 @@
 
       const submitLogin = async () => {
         try {
-          await loginApi({ username: username.value, password: password.value });
+          await apiService.login({ username: username.value, password: password.value });
           login();
   
           errorMessage.value = '';

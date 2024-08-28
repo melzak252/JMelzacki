@@ -5,9 +5,9 @@
     <v-row class="justify-center">
       <v-col cols="12" md="8">
         <v-card elevation="10" class="pa-5">
-          <v-alert border="top" type="warning" variant="outlined" prominent class="registration-alert">
+          <!-- <v-alert border="top" type="warning" variant="outlined" prominent class="registration-alert">
             Registration is currently closed.
-          </v-alert>
+          </v-alert> -->
           <br>
           <v-card-title class="headline font-weight-bold">
             Welcome to Countrydle!
@@ -31,8 +31,7 @@
                     Step 1: Log In
                   </v-card-title>
                   <v-card-text>
-                    To start, you need to register an account (Actualy registration is closed! If you re lucky today You
-                    can be first today to use test acc (login: TestUser pass: test) and pass quiz before everyone). <br>
+                    To start, you need to register an account. <br>
                     Once registered, log in to access the game.
                   </v-card-text>
                 </v-card>

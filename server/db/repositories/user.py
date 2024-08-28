@@ -13,7 +13,7 @@ class UserRepository:
     @staticmethod
     def verify_password(password, db_password):
         return User.verify_password(password, db_password)
-    
+
     async def get(self, uid) -> User | None:
         result = await self.session.execute(select(User).where(User.id == uid))
 
@@ -25,8 +25,8 @@ class UserRepository:
         )
         return result.scalars().first()
 
-    async def register_user(user: UserCreate, session: AsyncSession) -> User:
-        result = await session.execute(
+    async def register_user(self, user: UserCreate) -> User:
+        result = await self.session.execute(
             select(User).where(
                 or_(User.username == user.username, User.email == user.email)
             )
@@ -40,9 +40,9 @@ class UserRepository:
         new_user = User(
             username=user.username, email=user.email, hashed_password=hashed_password
         )
-        session.add(new_user)
-        await session.commit()
-        await session.refresh(new_user)
+        self.session.add(new_user)
+        await self.session.commit()
+        await self.session.refresh(new_user)
 
         return new_user
 

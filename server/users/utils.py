@@ -1,9 +1,13 @@
 import os
 from datetime import UTC, datetime, timedelta
 
-from fastapi import HTTPException, status
+from db import get_db
+from db.models import User
+from db.repositories.user import UserRepository
+from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
@@ -37,3 +41,17 @@ def verify_access_token(token: str):
     except JWTError:
         raise credentials_exception
     return username
+
+
+async def get_current_user(
+    access_token: str = Cookie(None), session: AsyncSession = Depends(get_db)
+) -> User:
+    username = verify_access_token(access_token)
+    user = await UserRepository(session).get_user(username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user

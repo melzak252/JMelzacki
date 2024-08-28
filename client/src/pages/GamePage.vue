@@ -1,66 +1,8 @@
 <template>
   <v-container class="game-page">
     <div class="game-container">
-      <v-card class="chat-box">
-        <v-card-title>Ask Your Questions</v-card-title>
-        <div class="sent-box ma-0">
-
-          <v-text-field 
-            class="question-input" 
-            v-model="questionInput" 
-            maxlength="100" 
-            label="Ask a True/False Question"
-            placeholder="Is it located in Europe?" 
-            hide-details="auto"
-            @keyup.enter="sendQuestion"
-            :disabled="remainingQuestions <= 0 || loading || isGameOver"></v-text-field>
-          <v-btn class="sent-btn" style="height: 56px;" @click="sendQuestion" color="primary"
-            :disabled="remainingQuestions <= 0 || loading || isGameOver">
-            Ask
-            <v-icon dark right style="padding-left: 10px;">
-              mdi-send
-            </v-icon>
-          </v-btn>
-        </div>
-        <v-row>
-          <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
-            <v-card outlined :class="getRowClass(entry.answer)" class="pa-4">
-              <v-card-title>{{ entry.question }}</v-card-title>
-              <v-card-subtitle>{{ entry.answer }}</v-card-subtitle>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card class="pa-4 guess-box">
-        <v-card-title>Make a Guess</v-card-title>
-        <v-card-text>
-          <p>You have {{ remainingGuesses }} guesses remaining.</p>
-          <v-text-field 
-            maxlength="30" 
-            v-model="guessInput" 
-            label="Guess the Country" 
-            placeholder="Enter your guess..."
-            @keyup.enter="sendGuess" 
-            :disabled="remainingGuesses <= 0 || loading || isGameOver"></v-text-field>
-          <v-btn @click="sendGuess" color="primary" :disabled="remainingGuesses <= 0 || loading || isGameOver">
-            Guess
-            <v-icon dark right style="padding-left: 10px;">
-              mdi-magnify
-            </v-icon>
-          </v-btn>
-        </v-card-text>
-        <v-row>
-          <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
-            <v-card outlined :class="getRowClass(entry.response)" class="pa-4">
-              <v-card-title>{{ entry.guess }}</v-card-title>
-              <v-card-subtitle>{{ entry.response }}</v-card-subtitle>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-card>
-
-
+      <QuestionBox />
+      <GuessBox />
     </div>
     <v-dialog v-model="showPopup" max-width="500">
       <v-card>
@@ -70,7 +12,8 @@
             Great job! You've guessed the correct country. Keep it up!
           </p>
           <p v-else>
-            Don't worry! The solution will be revealed tomorrow with the new country.
+            The country was {{ country?.name }}. <br>
+            Don't worry! You can get it tomorrow!
           </p>
         </v-card-text>
         <v-card-actions>
@@ -82,88 +25,55 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref, watch } from 'vue';
-import { useAuth } from '../consumable/useAuth'
-import { useGame } from '../consumable/useGame'
-import { useRouter } from 'vue-router';
+import { computed, defineComponent, onMounted, ref, watch } from 'vue';
+import { useGameStore } from '../stores/game';
+import QuestionBox from '../components/QuestionBox.vue';
+import GuessBox from '../components/GuessBox.vue';
+
 export default defineComponent({
   name: 'GamePage',
+  components: {
+    QuestionBox,
+    GuessBox,
+  },
   setup() {
-    const { isAuthenticated } = useAuth();
-    const {
-      remainingQuestions,
-      remainingGuesses,
-      isGameOver,
-      questionsHistory,
-      guessHistory,
-      loading,
-      error,
-      won,
-      askQuestion,
-      makeGuess,
-      getUserTodayHistory } = useGame()
-    let router = useRouter();
+    // Access the store
+    const gameStore = useGameStore();
 
-    if (!isAuthenticated.value) {
-      router.push({ name: 'Home' });
-    }
-
-    getUserTodayHistory()
-
-    const questionInput = ref('');
-    const guessInput = ref('');
-    const showPopup = ref(false);
-
-    const reversedQuestionsHistory = computed(() => {
-      return [...questionsHistory.value].reverse();
+    const won = computed(() => gameStore.won);
+    const loading = computed(() => gameStore.loading);
+    const country = computed(() => gameStore.correctCountry);
+    const showPopup = ref(gameStore.isGameOver);
+    const shouldShow = ref(false);
+    onMounted(async () => {
+      await gameStore.loadGameState();
     });
-
-    const getRowClass = (answer: string) => {
-      if (answer === 'True') return 'green-outline';
-      if (answer === 'False') return 'red-outline';
-      return 'orange-outline';
-    };
-
-    const sendQuestion = () => {
-      const question = questionInput.value;
-      askQuestion(question);
-      questionInput.value = "";
-    }
-
-    const sendGuess = () => {
-      const guess = guessInput.value
-      makeGuess(guess);
-      guessInput.value = ""
-    }
 
     const closePopup = () => {
-      showPopup.value = false
-    }
+      showPopup.value = false;
+    };
 
-    watch(isGameOver, (newVal) => {
-      if (!newVal) return;
-
-      showPopup.value = true;
+    watch(() => gameStore.isGameOver, (newVal) => {
+      if (gameStore.loading) {
+        shouldShow.value = true;
+        return
+      }
+      showPopup.value = newVal;
     });
+
+    watch(() => gameStore.loading, (newVal) => {
+      if (newVal) return;
+      if (shouldShow) shouldShow.value = true
+    })
+
     return {
-      questionInput,
-      guessInput,
-      remainingGuesses,
-      remainingQuestions,
-      questionsHistory,
-      reversedQuestionsHistory,
-      guessHistory,
-      isGameOver,
-      error,
-      loading,
       showPopup,
       won,
-      getRowClass,
-      sendQuestion,
-      sendGuess,
-      closePopup
+      loading,
+      country,
+      closePopup,
     };
-  },
+  }
 });
 </script>
 
@@ -172,55 +82,6 @@ export default defineComponent({
   height: 100%;
   display: flex;
   justify-content: center;
-}
-
-.chat-box {
-  height: 100%;
-  padding: 20px;
-}
-
-.guess-box {
-  height: 100%;
-  padding: 20px;
-}
-
-.chat-log {
-  height: 400px;
-  /* overflow-y: auto; */
-  background-color: #f9f9f9;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.chat-message {
-  margin-bottom: 10px;
-}
-
-.green-outline {
-  border: 2px solid #4caf50;
-  color: #4caf50;
-  background-color: #4caf5010;
-}
-
-.red-outline {
-  border: 2px solid #f44336;
-  color: #f44336;
-  background-color: #f4433610;
-}
-
-.orange-outline {
-  border: 2px solid #ff9800;
-  color: #ff9800;
-  background-color: #ff980010;
-}
-
-.sent-box {
-  height: 100px;
-  display: grid;
-  grid-template-columns: auto 100px;
-  align-items: center;
-
-  padding: 15px;
 }
 
 .game-container {
@@ -238,24 +99,5 @@ export default defineComponent({
     grid-template-rows: auto auto;
     row-gap: 15px;
   }
-
-  .guess-box {
-    grid-row: 1;
-  }
-
-  .chat-box {
-    grid-row: 2;
-  }
- 
-  .sent-box {
-    height: max-content;
-    display: grid;
-    grid-template-columns: auto;
-    grid-template-rows: auto 56px;
-    align-items: center;
-
-    padding: 15px;
-  }
-
 }
 </style>

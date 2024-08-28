@@ -1,15 +1,12 @@
 <template>
 
   <v-container>
-    <v-alert border="top" type="warning" variant="outlined" prominent class="registration-alert">
-      Registration is currently closed.
-    </v-alert>
     <v-form @submit.prevent="submitRegistration" class="my-5">
-      <v-text-field v-model="username" label="Username" required disabled></v-text-field>
+      <v-text-field v-model="username" label="Username" required></v-text-field>
 
-      <v-text-field v-model="email" label="Email" type="email" required disabled></v-text-field>
-      <v-text-field v-model="password" label="Password" type="password" required disabled></v-text-field>
-      <v-btn type="submit" color="primary" disabled>Register</v-btn>
+      <v-text-field v-model="email" label="Email" type="email" required></v-text-field>
+      <v-text-field v-model="password" label="Password" type="password" required></v-text-field>
+      <v-btn type="submit" color="primary">Register</v-btn>
     </v-form>
     <v-dialog v-model="showPopup" max-width="500">
       <v-card>
@@ -27,9 +24,8 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import axios from 'axios';
-import config from "../config.json";
 import { useRouter } from 'vue-router';
+import { apiService } from '../services/api';
 
 export default defineComponent({
   name: 'RegistrationPage',
@@ -43,17 +39,16 @@ export default defineComponent({
     const showPopup = ref<boolean>(false);
     const registered = ref<boolean>(false);
     const submitRegistration = async () => {
-      alert("Regisration is closed!");
-      return;
+      // alert("Regisration is closed!");
+      // return;
       try {
         // Call the registration API
-        await axios.post(`${config.apiUrl}/register`, {
+        await apiService.register({
           email: email.value,
           username: username.value,
           password: password.value
-        }, {
-          withCredentials: true
         });
+
         showPopup.value = true;
         popUpTitle.value = `User: ${username.value} successfully registered!`
         popUpText.value = `You can go to login page and login as ${username.value}`;
@@ -67,7 +62,7 @@ export default defineComponent({
     };
     const closePopup = () => {
       showPopup.value = false;
-      if (registered) {
+      if (registered.value) {
         router.push({ name: 'Login' })
       }
     }
@@ -84,4 +79,3 @@ export default defineComponent({
   },
 });
 </script>
-2. Explanation o

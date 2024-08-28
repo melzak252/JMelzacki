@@ -1,15 +1,25 @@
 from datetime import date
 import random
-from typing import List
+from typing import List, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, DayCountry, Guess, Question, User
-from db.schemas.countrydle import GuessCreate, QuestionCreate, UserHistory
+from db.schemas.countrydle import (
+    CountrydleEndState,
+    CountrydleState,
+    FullUserHistory,
+    GuessCreate,
+    QuestionCreate,
+    UserHistory,
+)
 from db.repositories.country import CountryRepository
 
 
 class CountrydleRepository:
+    MAX_GUESSES = 3
+    MAX_QUESTIONS = 10
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -62,7 +72,7 @@ class CountrydleRepository:
         return result.scalars().first()
 
     async def create_guess(self, guess: GuessCreate) -> Guess:
-        new_entry = Guess(guess.model_dump())
+        new_entry = Guess(**guess.model_dump())
 
         self.session.add(new_entry)
 
@@ -91,7 +101,7 @@ class CountrydleRepository:
         return result.scalars().first()
 
     async def create_question(self, quesiton: QuestionCreate) -> Question:
-        new_entry = Question(quesiton.model_dump())
+        new_entry = Question(**quesiton.model_dump())
 
         self.session.add(new_entry)
 
@@ -119,6 +129,69 @@ class CountrydleRepository:
         self, user: User, day: DayCountry
     ) -> UserHistory:
         questions = await self.get_questions_for_user_day(user, day)
-        guesses = self.get_guesses_for_user_day(user, day)
+        guesses = await self.get_guesses_for_user_day(user, day)
 
         return UserHistory(user=user, questions=questions, guesses=guesses)
+
+    async def get_player_full_histiory_for_today(
+        self, user: User, day: DayCountry
+    ) -> FullUserHistory:
+        questions = await self.get_questions_for_user_day(user, day)
+        guesses = await self.get_guesses_for_user_day(user, day)
+
+        return FullUserHistory(user=user, questions=questions, guesses=guesses)
+
+    async def is_player_game_over(self, player: User, day: DayCountry) -> bool:
+        guesses: List[Guess] = await self.get_guesses_for_user_day(player, day)
+
+        if len(guesses) >= 3:
+            return True
+
+        if any(g.response == "True" for g in guesses):
+            return True
+
+        return False
+
+    async def get_game_result(self, user: User, day: DayCountry) -> Tuple[bool, bool]:
+        guesses: List[Guess] = await self.get_guesses_for_user_day(user, day)
+        won = any(g.response == "True" for g in guesses)
+        game_over = len(guesses) >= 3 or won
+        return game_over, won
+
+    async def get_game_state(self, user: User, day: DayCountry) -> CountrydleState:
+        questions = await self.get_questions_for_user_day(user, day)
+        guesses = await self.get_guesses_for_user_day(user, day)
+        question_asked = len(questions)
+        guesses_made = len(guesses)
+        game_over, won = await self.get_game_result(user, day)
+        return CountrydleState(
+            user=user,
+            questions_history=questions,
+            guess_history=guesses,
+            remaining_questions=self.MAX_QUESTIONS - question_asked,
+            remaining_guesses=self.MAX_GUESSES - guesses_made,
+            is_game_over=game_over,
+            won=won,
+            date=str(day.date),
+        )
+
+    async def get_end_game_state(
+        self, user: User, day: DayCountry
+    ) -> CountrydleEndState:
+        questions = await self.get_questions_for_user_day(user, day)
+        guesses = await self.get_guesses_for_user_day(user, day)
+        question_asked = len(questions)
+        guesses_made = len(guesses)
+        game_over, won = await self.get_game_result(user, day)
+        country = await CountryRepository(self.session).get(day.country_id)
+        return CountrydleEndState(
+            user=user,
+            country=country,
+            questions_history=questions,
+            guess_history=guesses,
+            remaining_questions=self.MAX_QUESTIONS - question_asked,
+            remaining_guesses=self.MAX_GUESSES - guesses_made,
+            is_game_over=game_over,
+            won=won,
+            date=str(day.date),
+        )

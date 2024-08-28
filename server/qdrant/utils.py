@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Tuple
 
-from db.models import DayCountry, Fragment
+from db.models import DayCountry, Fragment, Question
 from db.repositories.document import FragmentRepository
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -8,6 +8,9 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import FieldCondition, Filter, MatchValue
 from sqlalchemy.ext.asyncio import AsyncSession
+import qdrant
+
+from qdrant_client.models import PointStruct
 
 from .vectorize import get_embedding
 
@@ -31,13 +34,12 @@ def get_points(client: QdrantClient, collection_name: str, ids: list[int]):
 
 
 def search_matches(
-    client: QdrantClient,
     collection_name: str,
     query_vector: list,
     country_id: int = None,
     limit: int = 5,
 ):
-    search_result = client.search(
+    search_result = qdrant.client.search(
         query_filter=Filter(
             must=[
                 FieldCondition(
@@ -58,9 +60,9 @@ def search_matches(
 
 async def get_fragments_matching_question(
     question: str, day: DayCountry, collection_name: str, session: AsyncSession
-) -> list[Fragment]:
+) -> Tuple[list[Fragment], List[float]]:
     query = question
-    query_vector = get_embedding(query)
+    query_vector = get_embedding(query, qdrant.EMBEDDING_MODEL)
 
     points: list = search_matches(
         collection_name=collection_name,
@@ -74,4 +76,20 @@ async def get_fragments_matching_question(
         fragment = await f_repo.get(int(point.id))
         fragments.append(fragment)
 
-    return fragments
+    return fragments, query_vector
+
+
+async def add_question_to_qdrant(
+    question: Question, vector: List[float], country_id: int
+):
+    point = PointStruct(
+        id=question.id,
+        vector=vector,
+        payload={
+            "country_id": country_id,
+            "question_text": question.question,
+            "answer": question.answer,
+            "explonation": question.explanation,
+        },
+    )
+    qdrant.client.upsert(collection_name="questions", points=[point])

@@ -4,42 +4,48 @@ from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, DayCountry, Question, User
-from qdrant.utils import get_fragments_matching_question
+from qdrant.utils import get_fragments_matching_question, add_question_to_qdrant
 from qdrant import COLLECTION_NAME
 from db.schemas.country import DayCountryDisplay
 from db.repositories.countrydle import CountrydleRepository
 from db.schemas.countrydle import GuessCreate, QuestionCreate
+from db.repositories.country import CountryRepository
 
 
 async def ask_question(
     question: str, day_country: DayCountry, user: User, session: AsyncSession
 ) -> Question:
 
-    fragments = await get_fragments_matching_question(
+    fragments, question_vector = await get_fragments_matching_question(
         question, day_country, COLLECTION_NAME, session
     )
     context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
-    country: Country = day_country.country
+    country: Country = await CountryRepository(session).get(day_country.country_id)
 
     system_prompt = f"""
-    I want you to act as the game master for a country guessing game.
-    Player tries to guess a specific country based on 'True' or 'False' answers to their questions.
+    You are the game master for a country guessing game where the player tries to guess a specific country based on your responses.
+
+    ## Answer Guidelines:
+        - True: If you are fully confident that the answer is accurate.
+        - False: If you are fully confident that the answer is inaccurate.
+        - NA: If you do not know the answer or if the information is not available.
+        - Error: If the question is not a simple True/False question.
     
-    Answer questions True or False if you are fully confident of the answer.
-    Answer question NA if you do not know answer for that question.
-    Answer question Error if questions is not True/False question.
-    
-    Country to guess: {country.name}
-    ### Country additional information:
+    ## Contextual Integration: 
+        - Incorporate any relevant details from the provided context about the country into your explanations.
+
+    ### Country to Guess: {country.name}
+    ### context: 
+    [...]
     {context}
-    ###
-    
+    [...]
+
     ### Task
     You are answering the question with your best knowledge.
     Answer with JSON forma and nothing else. Use the specific format:
     {{
-        "answer": "Choose only one of these options exactly: True | False | NA | Error",
-        "explanation": "Your explanation for your answer"
+    "answer": "True | False | NA | Error",
+    "explanation": "Your explanation for your answer"
     }}
     ### 
     
@@ -49,35 +55,20 @@ async def ask_question(
         "answer": "True",
         "explanation": "France is known for its Bordeaux, Champagne and many more!"
     }}
-    
     Country: China. Question: Am I in Europe?
     {{
         "answer": "False",
         "explanation": "Chaina is located in Asia."
     }}
-    
-    Country: Czech Republic. Question: Are you in top 10 largest countries in the world?
+    If a question is too ambiguous, respond with:
     {{
-        "answer": "False",
-        "explanation": "Czech republic is not in top 10 largest countries."
+        "answer": "NA",
+        "explanation": "The question is too vague to answer correctly."
     }}
-    
-    Country: Finland. Question: When your country declared independance?
+    If the question contains unintelligible text (e.g., random characters), respond with:
     {{
         "answer": "Error",
-        "explanation": "Question is not True\False question!"
-    }}
-    
-    Country: France. Question: Is in your current president called Shrimp?
-    {{
-        "answer": "NA",
-        "explanation": "I don't have current information to answer that question."
-    }}
-    
-    Country: Chad. Question: ascap aso ndosiqn pa anjd
-    {{
-        "answer": "NA",
-        "explanation": "Cannot understand the question!"
+        "explanation": "The question contains gibberish."
     }}
     """
     question_prompt = f"""Question: {question}"""
@@ -105,30 +96,40 @@ async def ask_question(
 
     question_create = QuestionCreate(
         user_id=user.id,
-        country_id=day_country.id,
+        day_id=day_country.id,
         question=question,
         answer=answer_dict["answer"],
         explanation=answer_dict["explanation"],
         context=context,
     )
-    return await CountrydleRepository(session).create_question(question_create)
+
+    question_entity = await CountrydleRepository(session).create_question(
+        question_create
+    )
+    await add_question_to_qdrant(question_entity, question_vector, country.id)
+    return question_entity
 
 
 async def give_guess(
     guess: str, daily_country: DayCountryDisplay, user: User, session: AsyncSession
 ):
-    system_prompt = """
-    I want you to act as the game master for a country guessing game.
-    Player writes country and you have to say True if player guessed the country.
-    
-    Playher may use more casual name of country like USA, Holland, Pol etc.
+    country: Country = await CountryRepository(session).get(daily_country.country_id)
+
+    system_prompt = f"""
+    You are the game master for a country guessing game. The player will guess a country, and you must determine if the guess is correct.
+
+    Answering Guidelines:
+        - True: If the player correctly guessed the country, including casual or abbreviated names (e.g., USA, Holland, Pol).
+        - False: If the player's guess does not match the country.
+        - NA: If the guess is unclear or confusing.
     
     Answer guess True or False if you are fully confident of the answer.
     Answer guess NA if guess is confusing you.
-    
-    ### Task
-    You are answering the question with your best knowledge.
-    Answer with JSON forma and nothing else. Use the specific format:
+
+    Country to Guess: {country.name}
+
+    ### Task: 
+    Use your best knowledge to determine if the player's guess is correct. Respond only in JSON format as follows:
     {{
         "answer": "Choose only one of these options exactly: True | False | NA",
     }}
@@ -136,47 +137,37 @@ async def give_guess(
     
     ### Examples
     Country: Poland. Guess: Polska
-    {
+    {{
         "answer": "True"
-    }
+    }}
     
     Country: France. Guess: Franc
-    {
+    {{
         "answer": "True"
-    }
-    
-    Country: China. Guess: China
-    {
-        "answer": "True"
-    }
+    }}
     
     Country: United States of America. Guess: USA 
-    {
+    {{
         "answer": "True"
-    }
+    }}
     
     Country: Germany. Guess: Austria
-    {
+    {{
         "answer": "False"
-    }
+    }}
     
     Country: Australia. Guess: Austria
-    {
+    {{
         "answer": "False"
-    }
-    
-    Country: Kingdom of the Netherlands. Guess: Holland
-    {
-        "answer": "True"
-    }
+    }}
     
     Country: France. Guess: Germany or France
-    {
+    {{
         "answer": "NA"
-    } # False because player tried to cheat. He can ask one guess at a time.
+    }} # False because player tried to cheat. He can ask one guess at a time.
     """
 
-    guess_prompt = f"Country: {daily_country.country_name}. Guess: {guess}"
+    guess_prompt = f"Guess: {guess}"
 
     prompts = [
         {"role": "system", "content": system_prompt},

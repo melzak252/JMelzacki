@@ -13,7 +13,7 @@ class CountryRepository:
     async def get(self, cid: int) -> Country:
         result = await self.session.execute(select(Country).where(Country.id == cid))
 
-        return list(result.scalars().all())
+        return result.scalars().first()
 
     async def get_all_countries(self) -> List[Country]:
         result = await self.session.execute(select(Country))
