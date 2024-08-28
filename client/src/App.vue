@@ -5,6 +5,7 @@
       <v-toolbar-title>Country Guessing Game</v-toolbar-title>
       <v-spacer class="menu-spacer">
       </v-spacer>
+      <v-slide-group show-arrows>
       <v-btn to="/">Home</v-btn>
       <v-btn to="/portfolio">Portfolio</v-btn>
       <v-btn to="/aboutme">About Me</v-btn>
@@ -17,6 +18,7 @@
         <v-btn style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
         <span style="padding: 20px;"> {{ user?.username }}</span>
       </template>
+    </v-slide-group>
     </v-app-bar>
 
     <v-main>
