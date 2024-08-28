@@ -127,7 +127,7 @@ async def login(
 @app.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response):
     response.delete_cookie("access_token")
-    return response
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.post("/register", response_model=UserDisplay)
