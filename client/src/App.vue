@@ -1,25 +1,43 @@
 <!-- src/App.vue -->
 <template>
   <v-app>
-    <v-app-bar app>
-      <v-toolbar-title>Country Guessing Game</v-toolbar-title>
-      <v-spacer class="menu-spacer">
-      </v-spacer>
-      <v-slide-group show-arrows>
-      <v-btn to="/">Home</v-btn>
-      <v-btn to="/portfolio">Portfolio</v-btn>
-      <v-btn to="/aboutme">About Me</v-btn>
-      <template v-if="!isAuthenticated">
-        <v-btn to="/login">Login</v-btn>
-        <v-btn to="/register">Register</v-btn>
-      </template>
-      <template v-else>
-        <v-btn to="/game">Play</v-btn>
-        <v-btn style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
-        <span style="padding: 20px;"> {{ user?.username }}</span>
-      </template>
-    </v-slide-group>
-    </v-app-bar>
+    <template v-if="!isMobile">
+      <v-app-bar app>
+        <v-toolbar-title>Countrydle</v-toolbar-title>
+        <v-spacer class="menu-spacer">
+        </v-spacer>
+        <v-btn elevation="8" tonal to="/">Home</v-btn>
+        <v-btn elevation="8" tonal to="/portfolio">Portfolio</v-btn>
+        <v-btn elevation="8" tonal to="/aboutme">About Me</v-btn>
+        <template v-if="!isAuthenticated">
+          <v-btn elevation="8" tonal to="/login">Login</v-btn>
+          <v-btn elevation="8" tonal to="/register">Register</v-btn>
+        </template>
+        <template v-else>
+          <v-btn elevation="8" tonal to="/game">Play</v-btn>
+          <v-btn elevation="8" tonal style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
+          <span style="padding: 20px; margin-left: 20px; border-left: 1px solid grey;"> {{ user?.username }}</span>
+        </template>
+      </v-app-bar>
+    </template>
+    <template v-else>
+      <v-app-bar app>
+        <v-slide-group style="display: flex; justify-content: center; width: 100%;" show-arrows>
+          <v-btn elevation="4" size="small" tonal to="/">Home</v-btn>
+          <v-btn elevation="4" size="small" to="/portfolio">Portfolio</v-btn>
+          <v-btn elevation="4" size="small" to="/aboutme">About Me</v-btn>
+          <template v-if="!isAuthenticated">
+            <v-btn elevation="4" size="small" to="/login">Login</v-btn>
+            <v-btn elevation="4" size="small" to="/register">Register</v-btn>
+          </template>
+          <template v-else>
+            <v-btn elevation="4" size="small" to="/game">Play</v-btn>
+            <v-btn elevation="4" size="small" style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
+          </template>
+        </v-slide-group>
+      </v-app-bar>
+    </template>
+
 
     <v-main>
       <v-container>
@@ -32,12 +50,13 @@
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue';
 import { useAuth } from './consumable/useAuth';
+import { useMediaQuery } from './consumable/useMediaQuery';
 
 export default defineComponent({
   name: 'App',
   setup() {
     const { isAuthenticated, user, login, logout } = useAuth();
-
+    const isMobile = useMediaQuery("(max-width: 800px)")
     const handleLogout = () => {
       logout();
       window.location.href = '/';
@@ -50,6 +69,7 @@ export default defineComponent({
 
     return {
       isAuthenticated,
+      isMobile,
       user,
       handleLogout,
     };
@@ -67,5 +87,22 @@ export default defineComponent({
   font-size: small !important;
   max-width: 500px !important;
   margin-left: 25%;
+}
+</style>
+
+<style>
+
+.v-slide-group__content {
+  justify-content: center;
+}
+
+.v-btn {
+  width: 120px;
+}
+
+@media (max-width: 600px) {
+  .v-btn {
+    width: 100px;
+  }
 }
 </style>

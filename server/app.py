@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 from contextlib import asynccontextmanager
 
@@ -29,11 +30,10 @@ scheduler = AsyncIOScheduler()
 
 async def generate_country_for_today():
     async with AsyncSessionLocal() as session:
-        CountrydleRepository(session).generate_new_day_country(session=session)
+        await CountrydleRepository(session).generate_new_day_country()
 
 
 scheduler.add_job(generate_country_for_today, CronTrigger(hour=0, minute=1))
-
 
 async def init_models(engine: AsyncEngine):
     async with engine.begin() as conn:
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Specify domains for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -126,7 +126,15 @@ async def login(
 
 @app.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.set_cookie(
+        key="access_token",
+        value="",
+        httponly=True,
+        secure=True,  # Set to True in production
+        expires=datetime.datetime.now().isoformat(),
+        samesite="Lax",
+        path="/",
+    )
     return {"success": 1}
 
 
