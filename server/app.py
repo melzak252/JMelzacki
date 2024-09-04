@@ -1,79 +1,20 @@
-import asyncio
-import datetime
-import logging
-from contextlib import asynccontextmanager
-
-import users.crud as ucrud
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from countrydle import router as countrydle_router
-from countrydle.crud import populate_countries
-from db import AsyncSessionLocal, get_db, get_engine
-from db.base import Base
-from db.models import *  # noqa: F403
-from db.repositories.countrydle import CountrydleRepository
-from db.repositories.user import UserRepository
-from db.schemas.user import UserCreate, UserDisplay
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Response, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordRequestForm
-from qdrant import close_qdrant_client, init_qdrant
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from users import router as users_router
-from users.utils import create_access_token
-
+from fastapi_mail import MessageSchema
 load_dotenv()
 
-scheduler = AsyncIOScheduler()
-
-
-async def generate_country_for_today():
-    async with AsyncSessionLocal() as session:
-        await CountrydleRepository(session).generate_new_day_country()
-
-
-scheduler.add_job(generate_country_for_today, CronTrigger(hour=0, minute=1))
-
-async def init_models(engine: AsyncEngine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        logging.info("Database connection established and models created.")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    engine = get_engine()
-    try:
-        await init_models(engine)
-        scheduler.start()
-
-        async with AsyncSessionLocal() as session:
-            await ucrud.add_base_permissions(session)
-            await populate_countries(session)
-            await init_qdrant(session)
-
-            c_repo = CountrydleRepository(session)
-            if await c_repo.get_today_country() is None:
-                await c_repo.generate_new_day_country()
-
-        yield
-    except ConnectionRefusedError:
-        logging.error("Exiting application due to database connection failure.")
-        await asyncio.sleep(10)
-        raise
-    except Exception as e:
-        logging.error("Exiting application due to error.")
-        raise e
-    finally:
-        try:
-            logging.info("Shutting down application...")
-            scheduler.shutdown(wait=True)
-            close_qdrant_client()
-            await engine.dispose()
-            logging.info("Application shutdown complete.")
-        except Exception as e:
-            logging.error(f"Error during shutdown: {e}")
+import datetime
+from utils.app import lifespan
+from countrydle import router as countrydle_router
+from db import get_db
+from db.repositories.user import UserRepository
+from schemas.user import UserCreate, UserDisplay
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
+from users import router as users_router
+from users.utils import create_access_token, create_verification_token, verify_email_token
+from utils.email import fm, fm_noreply
 
 
 app = FastAPI(lifespan=lifespan)
@@ -138,6 +79,26 @@ async def logout(response: Response):
     return {"success": 1}
 
 
-@app.post("/register", response_model=UserDisplay)
-async def register(user: UserCreate, session: AsyncSession = Depends(get_db)):
-    return await UserRepository(session).register_user(user=user)
+@app.post("/register")
+async def register(user: UserCreate, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_db)):
+    new_user = await UserRepository(session).register_user(user=user)
+    token = create_verification_token(new_user.email)
+    
+    verification_url = f"http://localhost:8080/verify-email?token={token}"
+    message = MessageSchema(
+        subject="Verify Your Email",
+        recipients=[new_user.email],  # List of recipients
+        subtype="html",
+        template_body={"username": new_user.username, "verification_url": verification_url},
+    )
+    
+    background_tasks.add_task(fm_noreply.send_message, message, template_name="verification_email.html")
+    
+    return {"message": "Verification email sent!"}
+
+
+@app.get("/verify-email")
+async def verify_email(token: str, session: AsyncSession = Depends(get_db)):
+    email = verify_email_token(token)
+    await UserRepository(session).verify_user_email(email)
+    return {"message": "Email successfully verified"}

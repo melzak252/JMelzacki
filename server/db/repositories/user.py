@@ -1,9 +1,9 @@
 from fastapi import HTTPException
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Permission, User
-from db.schemas.user import UserCreate
+from schemas.user import UserCreate
 
 
 class UserRepository:
@@ -19,6 +19,16 @@ class UserRepository:
 
         return result.scalars().first()
 
+    async def get_by_email(self, email) -> User | None:
+        result = await self.session.execute(select(User).where(User.email == email))
+
+        return result.scalars().first()
+    
+    async def get_veified_user(self, uid) -> User | None:
+        result = await self.session.execute(select(User).where(and_(User.id == uid, User.verified == True)))
+
+        return result.scalars().first()
+    
     async def get_user(self, username: str) -> User | None:
         result = await self.session.execute(
             select(User).where(User.username == username)
@@ -46,6 +56,14 @@ class UserRepository:
 
         return new_user
 
+    async def verify_user_email(self, email: str):
+        result = await self.session.execute(
+            select(User).where(User.email == email)
+        )
+        
+        user = result.scalar_one()
+        user.verified = True
+        await self.session.commit()
 
 class PermissionRepository:
     def __init__(self, session: AsyncSession):

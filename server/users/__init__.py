@@ -1,6 +1,6 @@
 from db import get_db
 from db.models import User
-from db.schemas.user import UserDisplay
+from schemas.user import UserDisplay
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession

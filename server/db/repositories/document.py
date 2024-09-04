@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, Document, Fragment
-from db.schemas.country import CountryBase
+from schemas.country import CountryBase
 
 
 class DocumentRepository:

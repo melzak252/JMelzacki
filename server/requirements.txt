@@ -12,3 +12,4 @@ python-multipart
 apscheduler
 qdrant-client
 pgvector
+fastapi-mail

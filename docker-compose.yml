@@ -57,7 +57,7 @@ services:
     environment:
       - OPENAI_API_KEY=sk-...
       - DATABASE_URL=postgresql+asyncpg://postgres:root@db:5432/guess_country
-      - QUIZ_MODEL=gpt-3.5-turbo
+      - QUIZ_MODEL=gpt-4o-mini
       - SECRET_KEY=...
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30   
@@ -66,6 +66,9 @@ services:
       - COLLECTION_NAME=countries
       - EMBEDDING_MODEL=text-embedding-ada-002
       - EMBEDDING_SIZE=1536
+      - EMAIL_USERNAME=jakub.melzacki@jmelzacki.com
+      - NOREPLY_EMAIL=noreply@jmelzacki.com
+      - EMAIL_PASSWORD=...
     volumes:
       - ./data:/usr/src/app/data
       - ./databases/qdrant/snapshots:/qdrant/snapshots

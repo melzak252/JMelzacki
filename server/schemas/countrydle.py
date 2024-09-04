@@ -3,8 +3,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from db.schemas.user import UserDisplay
-from db.schemas.country import CountryDisplay
+from schemas.user import UserDisplay
+from schemas.country import CountryDisplay
 
 
 class QuestionBase(BaseModel):
