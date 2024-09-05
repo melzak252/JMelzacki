@@ -13,3 +13,4 @@ apscheduler
 qdrant-client
 pgvector
 fastapi-mail
+alembic
