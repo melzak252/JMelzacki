@@ -45,3 +45,6 @@ class UserDisplay(BaseModel):
 
     class Config:
         from_attributes = True
+
+class GoogleSignIn(BaseModel):
+    credential: str

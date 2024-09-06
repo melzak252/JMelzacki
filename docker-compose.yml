@@ -69,6 +69,7 @@ services:
       - EMAIL_USERNAME=jakub.melzacki@jmelzacki.com
       - NOREPLY_EMAIL=noreply@jmelzacki.com
       - EMAIL_PASSWORD=...
+      - GOOGLE_CLIENT_ID=...
     volumes:
       - ./data:/usr/src/app/data
       - ./databases/qdrant/snapshots:/qdrant/snapshots

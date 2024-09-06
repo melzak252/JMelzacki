@@ -4,8 +4,7 @@ import HomePage from "./pages/HomePage.vue";
 import PortfolioPage from "./pages/PortfolioPage.vue";
 import AboutMePage from "./pages/AboutMePage.vue";
 import GamePage from "./pages/GamePage.vue";
-import LoginPage from "./pages/LoginPage.vue";
-import RegistrationPage from "./pages/RegistrationPage.vue";
+import SignPage from "./pages/SignPage.vue";
 
 const routes = [
   {
@@ -28,8 +27,7 @@ const routes = [
     name: "Game",
     component: GamePage,
   },
-  { path: "/login", name: "Login", component: LoginPage },
-  { path: "/register", name: "Register", component: RegistrationPage },
+  { path: "/sign", name: "Sign", component: SignPage },
 ];
 
 export const router = createRouter({
