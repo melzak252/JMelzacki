@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class PermissionBase(BaseModel):
@@ -19,7 +19,7 @@ class PermissionDisplay(PermissionBase):
 
 class UserCreate(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     password: str
 
 
@@ -31,7 +31,7 @@ class UserLogin(BaseModel):
 class DevUser(BaseModel):
     id: int
     username: str
-    email: str
+    email: EmailStr
     hashed_password: str
 
     class Config:
@@ -41,7 +41,10 @@ class DevUser(BaseModel):
 class UserDisplay(BaseModel):
     id: int
     username: str
-    email: str
+    email: EmailStr
 
     class Config:
         from_attributes = True
+
+class GoogleSignIn(BaseModel):
+    credential: str

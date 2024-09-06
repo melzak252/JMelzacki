@@ -7,6 +7,7 @@ from db.repositories.user import UserRepository
 from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -41,6 +42,26 @@ def verify_access_token(token: str):
     except JWTError:
         raise credentials_exception
     return username
+
+def create_verification_token(email: str):
+    expiration = datetime.now() + timedelta(hours=24)  # Token valid for 24 hours
+    to_encode = {"email": email, "exp": expiration}
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return token
+
+
+def verify_email_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["email"]
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Token expired"
+        )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token"
+        )
 
 
 async def get_current_user(

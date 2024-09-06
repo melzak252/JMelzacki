@@ -1,7 +1,7 @@
 from db import get_db
 from db.models import User
 from db.repositories.countrydle import CountrydleRepository
-from db.schemas.countrydle import (
+from schemas.countrydle import (
     CountrydleEndState,
     CountrydleState,
     FullUserHistory,

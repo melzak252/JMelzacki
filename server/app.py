@@ -1,80 +1,24 @@
-import asyncio
-import datetime
-import logging
-from contextlib import asynccontextmanager
-
-import users.crud as ucrud
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from countrydle import router as countrydle_router
-from countrydle.crud import populate_countries
-from db import AsyncSessionLocal, get_db, get_engine
-from db.base import Base
-from db.models import *  # noqa: F403
-from db.repositories.countrydle import CountrydleRepository
-from db.repositories.user import UserRepository
-from db.schemas.user import UserCreate, UserDisplay
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Response, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordRequestForm
-from qdrant import close_qdrant_client, init_qdrant
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from users import router as users_router
-from users.utils import create_access_token
-
 load_dotenv()
 
-scheduler = AsyncIOScheduler()
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi_mail import MessageSchema
+from utils.google import verify_google_token
 
-
-async def generate_country_for_today():
-    async with AsyncSessionLocal() as session:
-        await CountrydleRepository(session).generate_new_day_country()
-
-
-scheduler.add_job(generate_country_for_today, CronTrigger(hour=0, minute=1))
-
-async def init_models(engine: AsyncEngine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        logging.info("Database connection established and models created.")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    engine = get_engine()
-    try:
-        await init_models(engine)
-        scheduler.start()
-
-        async with AsyncSessionLocal() as session:
-            await ucrud.add_base_permissions(session)
-            await populate_countries(session)
-            await init_qdrant(session)
-
-            c_repo = CountrydleRepository(session)
-            if await c_repo.get_today_country() is None:
-                await c_repo.generate_new_day_country()
-
-        yield
-    except ConnectionRefusedError:
-        logging.error("Exiting application due to database connection failure.")
-        await asyncio.sleep(10)
-        raise
-    except Exception as e:
-        logging.error("Exiting application due to error.")
-        raise e
-    finally:
-        try:
-            logging.info("Shutting down application...")
-            scheduler.shutdown(wait=True)
-            close_qdrant_client()
-            await engine.dispose()
-            logging.info("Application shutdown complete.")
-        except Exception as e:
-            logging.error(f"Error during shutdown: {e}")
-
+import datetime
+from utils.app import lifespan
+from countrydle import router as countrydle_router
+from db import get_db
+from db.repositories.user import UserRepository
+from schemas.user import GoogleSignIn, UserCreate, UserDisplay
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
+from users import router as users_router
+from users.utils import create_access_token, create_verification_token, verify_email_token
+from utils.email import fm, fm_noreply
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
@@ -84,6 +28,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+templates = Jinja2Templates(directory="templates")
+
+app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(countrydle_router, tags=["countrydle"])
@@ -101,7 +49,10 @@ async def login(
     session: AsyncSession = Depends(get_db),
 ):
     user = await UserRepository(session).get_user(form_data.username)
-
+    
+    if not user.verified:
+        raise HTTPException(status_code=400, detail="User's email is not verified! Verify your email before login!")
+        
     if not user or not UserRepository.verify_password(
         form_data.password, user.hashed_password
     ):
@@ -124,6 +75,44 @@ async def login(
     }
 
 
+
+@app.post("/google-signin")
+async def google_signin(
+    credential: GoogleSignIn,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_db),
+):
+    token_info = verify_google_token(credential.credential)
+    user = await UserRepository(session).get_by_email(token_info["email"])
+    
+    if not user:
+        user = await UserRepository(session).register_by_google(token_info)        
+        message = MessageSchema(
+            subject="Verify Your Email",
+            recipients=[user.email],  # List of recipients
+            subtype="html",
+            template_body={"username": user.username},
+        )
+        background_tasks.add_task(fm_noreply.send_message, message, template_name="google_login_alert.html")        
+        
+        
+    access_token = create_access_token(data={"sub": user.username})
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,  # Set to True in production
+        samesite="Lax",
+        path="/",
+    )
+    return {
+        "access_token": access_token,
+        "username": user.username,
+        "token_type": "bearer",
+    }
+
 @app.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
     response.set_cookie(
@@ -138,6 +127,29 @@ async def logout(response: Response):
     return {"success": 1}
 
 
-@app.post("/register", response_model=UserDisplay)
-async def register(user: UserCreate, session: AsyncSession = Depends(get_db)):
-    return await UserRepository(session).register_user(user=user)
+@app.post("/register")
+async def register(user: UserCreate, response: Response, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_db)):
+    new_user = await UserRepository(session).register_user(user=user)    
+    token = create_verification_token(new_user.email)
+    
+    verification_url = f"https://jmelzacki.com/api/verify-email?token={token}"
+    message = MessageSchema(
+        subject="Verify Your Email",
+        recipients=[new_user.email],  # List of recipients
+        subtype="html",
+        template_body={"username": new_user.username, "verification_url": verification_url},
+    )
+    
+    background_tasks.add_task(fm_noreply.send_message, message, template_name="verification_email.html")
+    
+    return {"message": "Verification email sent!", "ok": True}
+
+
+@app.get("/verify-email")
+async def verify_email(request: Request,token: str, session: AsyncSession = Depends(get_db)):
+    email = verify_email_token(token)
+    user = await UserRepository(session).verify_user_email(email)
+    return templates.TemplateResponse("verified_email.html", {
+        "request": request,
+        "username": user.username,
+    })

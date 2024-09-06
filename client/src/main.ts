@@ -10,6 +10,7 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
+import GoogleLogInPlugin from "vue3-google-login";
 
 const vuetify = createVuetify({
     theme: {
@@ -35,8 +36,13 @@ const vuetify = createVuetify({
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate); // Register the persistence plugin
 
+
+
 createApp(App)
   .use(router)  // Use the router
   .use(pinia)
   .use(vuetify) // Use Vuetify
+  .use(GoogleLogInPlugin, {
+    clientId: '624396927539-luhujtnrft1igdoug3bim8ac9nmvf3sk.apps.googleusercontent.com',
+  })  
   .mount('#app');

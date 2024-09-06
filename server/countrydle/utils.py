@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import Country, DayCountry, Question, User
 from qdrant.utils import get_fragments_matching_question, add_question_to_qdrant
 from qdrant import COLLECTION_NAME
-from db.schemas.country import DayCountryDisplay
+from schemas.country import DayCountryDisplay
 from db.repositories.countrydle import CountrydleRepository
-from db.schemas.countrydle import GuessCreate, QuestionCreate
+from schemas.countrydle import GuessCreate, QuestionCreate
 from db.repositories.country import CountryRepository
 
 

@@ -4,6 +4,9 @@ import config from '../config.json';
 const apiClient = axios.create({
   baseURL: config.apiUrl,
   withCredentials: true,   // Include credentials for cross-origin requests
+  headers: {
+    "Content-Type": "application/json", // Form-encoded data for auth
+  },
 });
 
 const authClient = axios.create({
@@ -17,7 +20,9 @@ apiClient.interceptors.response.use(
   response => response,
   error => {
     console.error('API error:', error.response || error.message);
-    return Promise.reject(error);
+    if(error.status >= 500) return Promise.reject(error);
+
+    return error.response
   }
 );
 // API service for the game
@@ -28,6 +33,9 @@ export const apiService = {
     formData.append('password', credentials.password);
 
     return authClient.post("/login", formData);
+  },
+  googleSignIn(credential: string) {
+    return apiClient.post("/google-signin", { credential: credential });
   },
   register(credentials: {username: string; email: string; password: string}) {
     return apiClient.post('/register', credentials);

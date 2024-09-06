@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, DayCountry, Guess, Question, User
-from db.schemas.countrydle import (
+from schemas.countrydle import (
     CountrydleEndState,
     CountrydleState,
     FullUserHistory,

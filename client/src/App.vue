@@ -10,8 +10,7 @@
         <v-btn elevation="8" tonal to="/portfolio">Portfolio</v-btn>
         <v-btn elevation="8" tonal to="/aboutme">About Me</v-btn>
         <template v-if="!isAuthenticated">
-          <v-btn elevation="8" tonal to="/login">Login</v-btn>
-          <v-btn elevation="8" tonal to="/register">Register</v-btn>
+          <v-btn elevation="8" tonal to="/sign">Sign in</v-btn>
         </template>
         <template v-else>
           <v-btn elevation="8" tonal to="/game">Play</v-btn>
@@ -27,8 +26,7 @@
           <v-btn elevation="4" size="small" to="/portfolio">Portfolio</v-btn>
           <v-btn elevation="4" size="small" to="/aboutme">About Me</v-btn>
           <template v-if="!isAuthenticated">
-            <v-btn elevation="4" size="small" to="/login">Login</v-btn>
-            <v-btn elevation="4" size="small" to="/register">Register</v-btn>
+            <v-btn elevation="4" size="small" to="/sign">Sign in</v-btn>
           </template>
           <template v-else>
             <v-btn elevation="4" size="small" to="/game">Play</v-btn>

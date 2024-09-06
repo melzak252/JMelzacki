@@ -15,6 +15,7 @@ async def populate_countries(session: AsyncSession):
     if countries:
         return
 
+    return
     with open("data/countries.csv", "r", encoding="utf8") as f:
         reader = csv.DictReader(f, fieldnames=["name", "official_name", "wiki_page"])
         next(reader)
