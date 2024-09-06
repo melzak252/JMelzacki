@@ -54,7 +54,7 @@ export default defineComponent({
     };
 
     watch(() => gameStore.isGameOver, (newVal) => {
-      if (gameStore.loading) {
+      if (gameStore.loading && newVal) {
         shouldShow.value = true;
         return
       }
