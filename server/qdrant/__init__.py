@@ -33,6 +33,11 @@ async def init_qdrant(session: AsyncSession):
             collection_name="questions",
             vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),
         )
+        client.create_payload_index(
+            collection_name='questions',
+            field_name='country_id',
+            field_schema='integer'
+        )
 
     if client.collection_exists(COLLECTION_NAME):
         return
@@ -49,11 +54,23 @@ async def init_qdrant(session: AsyncSession):
                 if client.collection_exists(COLLECTION_NAME):
                     return
                 await asyncio.sleep(interval)
+ 
+        client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name='country_id',
+            field_schema='integer'  # or 'keyword' if your ID is textual
+        )
         return
 
     client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),
+    )
+     
+    client.create_payload_index(
+        collection_name=COLLECTION_NAME,
+        field_name='country_id',
+        field_schema='integer'  # or 'keyword' if your ID is textual
     )
 
     await populate_qdrant(session)
