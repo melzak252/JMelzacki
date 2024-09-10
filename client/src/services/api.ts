@@ -1,6 +1,7 @@
 import axios from 'axios';
 import config from '../config.json';
-// Create an axios instance for general API requests
+import { User } from '../stores/auth';
+
 const apiClient = axios.create({
   baseURL: config.apiUrl,
   withCredentials: true,   // Include credentials for cross-origin requests
@@ -27,12 +28,24 @@ apiClient.interceptors.response.use(
 );
 // API service for the game
 export const apiService = {
-  login(credentials: { username: string; password: string }) {
+  async login(credentials: { username: string; password: string }) {
     const formData = new URLSearchParams();
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
 
-    return authClient.post("/login", formData);
+    return await authClient.post("/login", formData);
+  },
+  async logout(): Promise<{success: boolean}>{
+    return await apiClient.post(`${config.apiUrl}/logout`, {},
+    {
+    withCredentials: true
+    });
+  },
+  async getUser() {
+    const response = await axios.get(`${config.apiUrl}/users/me`, {
+    withCredentials: true
+    });
+    return response
   },
   googleSignIn(credential: string) {
     return apiClient.post("/google-signin", { credential: credential });
@@ -55,4 +68,5 @@ export const apiService = {
   endGame() {
     return apiClient.get('/countrydle/end');  // End the game and get the final result (country and explanations)
   },
+
 };

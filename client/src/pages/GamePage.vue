@@ -29,6 +29,8 @@ import { computed, defineComponent, onMounted, ref, watch } from 'vue';
 import { useGameStore } from '../stores/game';
 import QuestionBox from '../components/QuestionBox.vue';
 import GuessBox from '../components/GuessBox.vue';
+import { useAuthStore } from '../stores/auth';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: 'GamePage',
@@ -39,6 +41,8 @@ export default defineComponent({
   setup() {
     // Access the store
     const gameStore = useGameStore();
+    const authStore = useAuthStore();
+    const router = useRouter();
 
     const won = computed(() => gameStore.won);
     const loading = computed(() => gameStore.loading);
@@ -46,6 +50,10 @@ export default defineComponent({
     const showPopup = ref(gameStore.isGameOver);
     const shouldShow = ref(false);
     onMounted(async () => {
+      if(!authStore.isAuth) {
+        router.push({ name: 'Home' })
+        return;
+      }
       await gameStore.loadGameState();
     });
 

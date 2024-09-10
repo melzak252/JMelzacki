@@ -46,7 +46,7 @@
 import { defineComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiService } from '../services/api';
-import { useAuth } from '../consumable/useAuth';
+import { useAuthStore } from '../stores/auth';
 
 export default defineComponent({
   name: 'SignPage',
@@ -64,7 +64,7 @@ export default defineComponent({
     const passwordLog = ref('');
     const errorMessage = ref('');
 
-    const { login } = useAuth();
+    const authStore = useAuthStore();
 
     const popUp = (title: string, content: string) => {
       showPopup.value = true;
@@ -73,45 +73,36 @@ export default defineComponent({
     }
 
     const submitLogin = async () => {
-      try {
-        let response = await apiService.login({ username: usernameLog.value, password: passwordLog.value });
-        if(response.status !== 400) {
-          login();
-          router.push({ name: 'Home' })
-        }
-
-        popUp(
-          'Login failed.',
-          response.data.detail
-        );
-      } catch (error: any) {
-        popUp(
-          'Login failed.',
-          error.response.data.detail
-        );
+      await authStore.login({ username: usernameLog.value, password: passwordLog.value });
+      if(authStore.isAuth) {
+        router.push({ name: 'Home' })
+        return;
       }
+
+      popUp(
+        'Login failed.',
+        authStore.errorMessage
+      );
+
     };
 
     const googleLoginCallback = async (response: any) => {
-      try {
-
-        await apiService.googleSignIn(response.credential);
-        userLoggedIn.value = true;
-        login();
+      await authStore.googleSignIn(response.credential);
+      if(authStore.isAuth) {
         router.push({ name: 'Home' })
-      } catch (error: any) {
-        popUp(
-          'Login failed.',
-          error.message
-        );
+        return;
       }
+    
+      popUp(
+        'Login failed.',
+        authStore.errorMessage
+      );
     }
 
     const submitRegistration = async () => {
       const isUsernameValid = usernameRules.every(rule => rule(usernameReg.value) === true);
       const isEmailValid = emailRules.every(rule => rule(email.value) === true);
       const isPasswordValid = passwordRules.every(rule => rule(passwordReg.value) === true);
-      console.log(isEmailValid, isUsernameValid, isPasswordValid)
       if (!(isUsernameValid && isEmailValid && isPasswordValid)) {
         showPopup.value = true;
         popUpTitle.value = 'Cannot register user!';
@@ -127,7 +118,6 @@ export default defineComponent({
           username: usernameReg.value,
           password: passwordReg.value
         });
-        console.log(response)
         if (response && response.data.ok) {
           popUp(
             `User: ${usernameReg.value} successfully registered!`,

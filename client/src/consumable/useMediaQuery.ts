@@ -5,7 +5,6 @@ export function useMediaQuery(query: string): Ref<boolean> {
   const matches = ref<boolean>(window.matchMedia(query).matches);
 
   const updateMatches = (event: MediaQueryListEvent) => {
-    console.log(event.matches)
     matches.value = event.matches;
   };
 

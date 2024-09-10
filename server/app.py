@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+from db.models import User
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi_mail import MessageSchema
@@ -17,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from users import router as users_router
-from users.utils import create_access_token, create_verification_token, verify_email_token
+from users.utils import create_access_token, create_verification_token, get_current_user, verify_email_token
 from utils.email import fm, fm_noreply
 
 app = FastAPI(lifespan=lifespan)
@@ -41,8 +42,7 @@ app.include_router(countrydle_router, tags=["countrydle"])
 async def root():
     return {"message": "Welcome to the Game API!"}
 
-
-@app.post("/login")
+@app.post("/login", response_model=UserDisplay)
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -50,14 +50,14 @@ async def login(
 ):
     user = await UserRepository(session).get_user(form_data.username)
     
-    if not user.verified:
-        raise HTTPException(status_code=400, detail="User's email is not verified! Verify your email before login!")
-        
     if not user or not UserRepository.verify_password(
         form_data.password, user.hashed_password
     ):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-
+    
+    if not user.verified:
+        raise HTTPException(status_code=400, detail="User's email is not verified! Verify your email before login!")
+        
     access_token = create_access_token(data={"sub": user.username})
 
     response.set_cookie(
@@ -68,15 +68,12 @@ async def login(
         samesite="Lax",
         path="/",
     )
-    return {
-        "access_token": access_token,
-        "username": user.username,
-        "token_type": "bearer",
-    }
+    
+    return user
 
 
 
-@app.post("/google-signin")
+@app.post("/google-signin", response_model=UserDisplay)
 async def google_signin(
     credential: GoogleSignIn,
     response: Response,
@@ -107,11 +104,7 @@ async def google_signin(
         samesite="Lax",
         path="/",
     )
-    return {
-        "access_token": access_token,
-        "username": user.username,
-        "token_type": "bearer",
-    }
+    return user
 
 @app.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
@@ -124,11 +117,11 @@ async def logout(response: Response):
         samesite="Lax",
         path="/",
     )
-    return {"success": 1}
+    return {"success": True}
 
 
 @app.post("/register")
-async def register(user: UserCreate, response: Response, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_db)):
+async def register(user: UserCreate, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_db)):
     new_user = await UserRepository(session).register_user(user=user)    
     token = create_verification_token(new_user.email)
     

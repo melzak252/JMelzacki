@@ -9,13 +9,13 @@
         <v-btn elevation="8" tonal to="/">Home</v-btn>
         <v-btn elevation="8" tonal to="/portfolio">Portfolio</v-btn>
         <v-btn elevation="8" tonal to="/aboutme">About Me</v-btn>
-        <template v-if="!isAuthenticated">
+        <template v-if="!authStore.isAuth">
           <v-btn elevation="8" tonal to="/sign">Sign in</v-btn>
         </template>
         <template v-else>
           <v-btn elevation="8" tonal to="/game">Play</v-btn>
           <v-btn elevation="8" tonal style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
-          <span style="padding: 20px; margin-left: 20px; border-left: 1px solid grey;"> {{ user?.username }}</span>
+          <span style="padding: 20px; margin-left: 20px; border-left: 1px solid grey;"> {{ authStore.user?.username }}</span>
         </template>
       </v-app-bar>
     </template>
@@ -25,7 +25,7 @@
           <v-btn elevation="4" size="small" tonal to="/">Home</v-btn>
           <v-btn elevation="4" size="small" to="/portfolio">Portfolio</v-btn>
           <v-btn elevation="4" size="small" to="/aboutme">About Me</v-btn>
-          <template v-if="!isAuthenticated">
+          <template v-if="!authStore.isAuth">
             <v-btn elevation="4" size="small" to="/sign">Sign in</v-btn>
           </template>
           <template v-else>
@@ -47,28 +47,26 @@
 
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue';
-import { useAuth } from './consumable/useAuth';
+import { useAuthStore } from './stores/auth';
 import { useMediaQuery } from './consumable/useMediaQuery';
 
 export default defineComponent({
   name: 'App',
   setup() {
-    const { isAuthenticated, user, login, logout } = useAuth();
+    const authStore = useAuthStore()
     const isMobile = useMediaQuery("(max-width: 800px)")
     const handleLogout = () => {
-      logout();
+      authStore.logout();
       window.location.href = '/';
     };
 
-    // Fetch user data on app initialization if the user is authenticated
     onMounted(() => {
-      login()
+      authStore.getUser()
     });
 
     return {
-      isAuthenticated,
+      authStore,
       isMobile,
-      user,
       handleLogout,
     };
   },
