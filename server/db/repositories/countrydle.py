@@ -120,7 +120,7 @@ class CountrydleRepository:
         questions_result = await self.session.execute(
             select(Question).where(
                 Question.user_id == user.id, Question.day_id == day.id
-            )
+            ).order_by(Question.id.desc())
         )
         return questions_result.scalars().all()
 

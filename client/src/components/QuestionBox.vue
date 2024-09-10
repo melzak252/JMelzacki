@@ -1,24 +1,22 @@
 <template>
   <v-card class="chat-box">
     <v-card-title>Ask Your Questions</v-card-title>
-    <p style="padding-left: 20px;">You have {{ remainingQuestions }} qestions remaining.</p>
+    <p style="padding-left: 1rem;">You have {{ remainingQuestions }} qestions remaining.</p>
     <div class="sent-box ma-0">
-      <v-text-field 
-        class="question-input" 
-        v-model="questionInput" 
-        maxlength="100" 
-        label="Ask a True/False Question"
-        placeholder="Is it located in Europe?" 
-        hide-details="auto"
-        @keyup.enter="sendQuestion"
-        :disabled="!canSend">
+      <v-text-field class="question-input" v-model="questionInput" maxlength="100" label="Ask a True/False Question"
+        placeholder="Is it located in Europe?" :rules="questionRules" @keyup.enter="sendQuestion" :disabled="!canSend">
       </v-text-field>
-      <v-btn class="sent-btn" style="height: 56px;" @click="sendQuestion" color="primary"
-        :disabled="!canSend">
-        Ask
-        <v-icon dark right style="padding-left: 10px;">
-          mdi-send
-        </v-icon>
+      <v-btn class="sent-btn" style="height: 56px; align-self: baseline;" @click="sendQuestion" color="primary"
+        :disabled="!canSend || !questionInput">
+        <template v-if="loading">
+          <v-progress-circular indeterminate color="white" size="24" class="mr-2"></v-progress-circular>
+        </template>
+        <template v-else>
+          Ask
+          <v-icon dark right style="padding-left: 10px;">
+            mdi-send
+          </v-icon>
+        </template>
       </v-btn>
     </div>
     <v-row>
@@ -61,10 +59,17 @@ export default defineComponent({
 
     // Handle sending the question
     const sendQuestion = () => {
+      if (!questionInput.value) return;
       const question = questionInput.value;
       gameStore.askQuestion(question); // Use the store action to send a question
       questionInput.value = ""; // Clear the input field
     };
+
+    const questionRules = [
+      // (v: string): string | boolean => !!v || 'Question is required',
+      // (v: string): string | boolean => v.length >= 3 || 'Question must be at least 3 characters!',
+      (v: string): string | boolean => v.length <= 100 || 'Question cannot be longer than 100 characters!'
+    ];
 
     return {
       questionInput,
@@ -74,6 +79,7 @@ export default defineComponent({
       reversedQuestionsHistory,
       loading,
       remainingQuestions,
+      questionRules,
       getRowClass,
       sendQuestion
     };
@@ -109,7 +115,7 @@ export default defineComponent({
   height: 100px;
   display: grid;
   grid-template-columns: auto 100px;
-  align-items: center;
-  padding: 15px;
+  align-items: flex-start;
+  padding: 0.5rem 1rem;
 }
 </style>
