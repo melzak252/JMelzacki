@@ -110,6 +110,8 @@ export default defineComponent({
                 router.push({ name: 'Home' })
                 return;
             }
+            if(authStore.user == null) return;
+            
             user.value = {
                 ...authStore.user
             };
