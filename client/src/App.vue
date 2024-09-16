@@ -66,7 +66,7 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      authStore.getUser()
+      authStore.checkAuth();
     });
 
     return {

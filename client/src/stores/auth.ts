@@ -53,6 +53,14 @@ export const useAuthStore = defineStore('auth', {
         this.user = null;
         await apiService.logout();
     },
+    async checkAuth(): Promise<boolean> {
+        const user = await this.getUser();
+        if(!user) {
+            this.logout();
+            return false;
+        }
+        return true;
+    },
     async getUser(): Promise<User | null> {
         this.error = false;
         this.errorMessage = '';
@@ -61,14 +69,12 @@ export const useAuthStore = defineStore('auth', {
             if(response.status !== 200) {
                 this.error = true;
                 this.errorMessage = response.data.detail;
-                this.logout()
                 return null;
             }
     
             const apiUser = response.data;
     
             if(!apiUser) {
-                this.logout();
                 return null;
             }
     
@@ -78,7 +84,6 @@ export const useAuthStore = defineStore('auth', {
         } catch (err: any) {
             this.error = true;
             this.errorMessage = err.response.data.detail;
-            await this.logout();
             return null;
         }
         

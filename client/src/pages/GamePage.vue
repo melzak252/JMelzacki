@@ -44,7 +44,7 @@ export default defineComponent({
     const popUpText = computed(() => gameStore.won ? "Great job! You've guessed the correct country. Keep it up!":
             `The country was <b>${ country.value?.name }</b>. <br>Don't worry! You can get it tomorrow!`);
     onMounted(async () => {
-      if(!authStore.isAuth) {
+      if(!await authStore.checkAuth()) {
         router.push({ name: 'Home' })
         return;
       }
