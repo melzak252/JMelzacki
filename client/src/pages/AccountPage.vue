@@ -81,7 +81,7 @@ export default defineComponent({
             // (v: string): string | boolean => /[A-Z]/.test(v) || 'Password must contain at least one uppercase letter',
             // (v: string): string | boolean => /[a-z]/.test(v) || 'Password must contain at least one lowercase letter',
             // (v: string): string | boolean => /[0-9]/.test(v) || 'Password must contain at least one number',
-            (v: string): string | boolean => pass1.value == pass2.value || 'Passwords must be the same!' 
+            (): string | boolean => pass1.value == pass2.value || 'Passwords must be the same!' 
 
         ];
 
