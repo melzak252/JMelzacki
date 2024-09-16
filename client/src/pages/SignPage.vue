@@ -29,17 +29,12 @@
     </fieldset>
 
   </v-container>
-  <v-dialog v-model="showPopup" max-width="500">
-    <v-card>
-      <v-card-title class="text-h5">{{ popUpTitle }}</v-card-title>
-      <v-card-text>
-        {{ popUpText }}
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="primary" @click="closePopup">Close</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <CustomPopUp 
+      :showPopup="showPopup" 
+      @update:showPopup="showPopup = $event" 
+      :popUpTitle="popUpTitle" 
+      :popUpText="popUpText"
+    />
 </template>
 
 <script lang="ts">
@@ -47,9 +42,13 @@ import { defineComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/auth';
+import CustomPopUp from '../components/CustomPopUp.vue';
 
 export default defineComponent({
   name: 'SignPage',
+  components: {
+    CustomPopUp: CustomPopUp
+  },
   setup() {
     const form = ref(null);
     const email = ref<string>('');
@@ -89,7 +88,7 @@ export default defineComponent({
     const googleLoginCallback = async (response: any) => {
       await authStore.googleSignIn(response.credential);
       if(authStore.isAuth) {
-        router.push({ name: 'Home' })
+        router.push({ name: 'Home'})
         return;
       }
     
@@ -138,10 +137,6 @@ export default defineComponent({
       }
     };
 
-    const closePopup = () => {
-      showPopup.value = false;
-    }
-
     const usernameRules = [
       (v: string): string | boolean => !!v || 'Username is required',
       (v: string): string | boolean => v.length >= 3 || 'Username must be at least 3 characters',
@@ -177,7 +172,6 @@ export default defineComponent({
       passwordRules,
       errorMessage,
       submitRegistration,
-      closePopup,
       submitLogin,
       googleLoginCallback,
     };

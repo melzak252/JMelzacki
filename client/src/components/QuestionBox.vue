@@ -47,7 +47,7 @@ export default defineComponent({
     const remainingQuestions = computed(() => gameStore.remainingQuestions)
     // Reverse the questionsHistory array
     const reversedQuestionsHistory = computed(() => {
-      return [...questionsHistory.value].reverse();
+      return [...gameStore.questionsHistory].reverse();
     });
 
     // Determine the row class based on the answer
@@ -59,6 +59,7 @@ export default defineComponent({
 
     // Handle sending the question
     const sendQuestion = () => {
+      questionInput.value = questionInput.value.trim();
       if (!questionInput.value) return;
       const question = questionInput.value;
       gameStore.askQuestion(question); // Use the store action to send a question

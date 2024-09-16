@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from db.models import User
@@ -13,12 +14,26 @@ from countrydle import router as countrydle_router
 from db import get_db
 from db.repositories.user import UserRepository
 from schemas.user import GoogleSignIn, UserCreate, UserDisplay
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from users import router as users_router
-from users.utils import create_access_token, create_verification_token, get_current_user, verify_email_token
+from users.utils import (
+    create_access_token,
+    create_verification_token,
+    get_current_user,
+    send_verification_email,
+    verify_email_token,
+)
 from utils.email import fm, fm_noreply
 
 app = FastAPI(lifespan=lifespan)
@@ -42,6 +57,7 @@ app.include_router(countrydle_router, tags=["countrydle"])
 async def root():
     return {"message": "Welcome to the Game API!"}
 
+
 @app.post("/login", response_model=UserDisplay)
 async def login(
     response: Response,
@@ -49,15 +65,18 @@ async def login(
     session: AsyncSession = Depends(get_db),
 ):
     user = await UserRepository(session).get_user(form_data.username)
-    
+
     if not user or not UserRepository.verify_password(
         form_data.password, user.hashed_password
     ):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    
+
     if not user.verified:
-        raise HTTPException(status_code=400, detail="User's email is not verified! Verify your email before login!")
-        
+        raise HTTPException(
+            status_code=400,
+            detail="User's email is not verified! Verify your email before login!",
+        )
+
     access_token = create_access_token(data={"sub": user.username})
 
     response.set_cookie(
@@ -68,9 +87,8 @@ async def login(
         samesite="Lax",
         path="/",
     )
-    
-    return user
 
+    return user
 
 
 @app.post("/google-signin", response_model=UserDisplay)
@@ -82,18 +100,19 @@ async def google_signin(
 ):
     token_info = verify_google_token(credential.credential)
     user = await UserRepository(session).get_by_email(token_info["email"])
-    
+
     if not user:
-        user = await UserRepository(session).register_by_google(token_info)        
+        user = await UserRepository(session).register_by_google(token_info)
         message = MessageSchema(
             subject="Verify Your Email",
             recipients=[user.email],  # List of recipients
             subtype="html",
             template_body={"username": user.username},
         )
-        background_tasks.add_task(fm_noreply.send_message, message, template_name="google_login_alert.html")        
-        
-        
+        background_tasks.add_task(
+            fm_noreply.send_message, message, template_name="google_login_alert.html"
+        )
+
     access_token = create_access_token(data={"sub": user.username})
 
     response.set_cookie(
@@ -105,6 +124,7 @@ async def google_signin(
         path="/",
     )
     return user
+
 
 @app.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(response: Response):
@@ -121,28 +141,26 @@ async def logout(response: Response):
 
 
 @app.post("/register")
-async def register(user: UserCreate, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_db)):
-    new_user = await UserRepository(session).register_user(user=user)    
-    token = create_verification_token(new_user.email)
-    
-    verification_url = f"https://jmelzacki.com/api/verify-email?token={token}"
-    message = MessageSchema(
-        subject="Verify Your Email",
-        recipients=[new_user.email],  # List of recipients
-        subtype="html",
-        template_body={"username": new_user.username, "verification_url": verification_url},
-    )
-    
-    background_tasks.add_task(fm_noreply.send_message, message, template_name="verification_email.html")
-    
+async def register(
+    user: UserCreate,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_db),
+):
+    new_user = await UserRepository(session).register_user(user=user)
+    await send_verification_email(new_user, background_tasks)
     return {"message": "Verification email sent!", "ok": True}
 
 
 @app.get("/verify-email")
-async def verify_email(request: Request,token: str, session: AsyncSession = Depends(get_db)):
+async def verify_email(
+    request: Request, token: str, session: AsyncSession = Depends(get_db)
+):
     email = verify_email_token(token)
     user = await UserRepository(session).verify_user_email(email)
-    return templates.TemplateResponse("verified_email.html", {
-        "request": request,
-        "username": user.username,
-    })
+    return templates.TemplateResponse(
+        "verified_email.html",
+        {
+            "request": request,
+            "username": user.username,
+        },
+    )

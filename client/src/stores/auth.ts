@@ -53,35 +53,45 @@ export const useAuthStore = defineStore('auth', {
         this.user = null;
         await apiService.logout();
     },
-    async getUser() {
+    async getUser(): Promise<User | null> {
         this.error = false;
         this.errorMessage = '';
-
-        const response = await apiService.getUser();
-        if(response.status !== 200) {
+        try {
+            const response = await apiService.getUser();
+            if(response.status !== 200) {
+                this.error = true;
+                this.errorMessage = response.data.detail;
+                this.logout()
+                return null;
+            }
+    
+            const apiUser = response.data;
+    
+            if(!apiUser) {
+                this.logout();
+                return null;
+            }
+    
+            this.isAuth = true;
+            this.user = apiUser;
+            return apiUser;
+        } catch (err: any) {
             this.error = true;
-            this.errorMessage = response.data.detail;
-            this.logout()
-            return;
+            this.errorMessage = err.response.data.detail;
+            await this.logout();
+            return null;
         }
-
-        const apiUser = response.data;
-
-        if(!apiUser) {
-            this.logout();
-            return;
-        }
-
-        this.isAuth = true;
-        this.user = apiUser;
+        
     },
     async googleSignIn(credential: string) {
+        this.error = false;
+        this.errorMessage = ''
         try {
             const response = await apiService.googleSignIn(credential);
             if(response.status !== 200) {
                 this.error = true;
                 this.errorMessage = response.data.detail;
-                this.logout();
+                await this.logout();
                 return;
             }
             this.user = response.data;
@@ -92,6 +102,45 @@ export const useAuthStore = defineStore('auth', {
             this.errorMessage = error.response.data.detail;
             await this.logout()
         }
+    },
+    async updateUser(user: User) {
+        this.error = false;
+        this.errorMessage = '';
+        try {
+            const response = await apiService.updateUser(user);
+            if(response.status !== 200) {
+                this.error = true;
+                this.errorMessage = response.data.detail;
+                return response;
+            }
+            this.user = user;
+            return response;
+
+        } catch (error: any) {
+            this.error = true;
+            this.errorMessage = error.response.data.detail;
+            await this.logout()
+            return error.response;
+        }
+    },
+    async changePassword(password: string) {
+        this.error = false;
+        this.errorMessage = '';
+        try {
+            const response = await apiService.changePassword(password);
+            if(response.status !== 200) {
+                this.error = true;
+                this.errorMessage = response.data.detail;
+            }
+            return response;
+        } catch (error: any) {
+            this.error = true;
+            this.errorMessage = error.response.data.detail;
+            return error.response;
+        }
     }
-  }
+  },
+  persist: {
+    storage: localStorage,
+  },
 });

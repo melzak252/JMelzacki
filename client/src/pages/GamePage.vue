@@ -4,23 +4,12 @@
       <QuestionBox />
       <GuessBox />
     </div>
-    <v-dialog v-model="showPopup" max-width="500">
-      <v-card>
-        <v-card-title class="text-h5">{{ won ? 'Congratulations!' : 'Game Over' }}</v-card-title>
-        <v-card-text>
-          <p v-if="won">
-            Great job! You've guessed the correct country. Keep it up!
-          </p>
-          <p v-else>
-            The country was {{ country?.name }}. <br>
-            Don't worry! You can get it tomorrow!
-          </p>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn color="primary" @click="closePopup">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <CustomPopUp
+      :showPopup="showPopup" 
+      @update:showPopup="showPopup = $event" 
+      :popUpTitle="popUpTitle"
+      :popUpText="popUpText"
+    />
   </v-container>
 </template>
 
@@ -31,12 +20,14 @@ import QuestionBox from '../components/QuestionBox.vue';
 import GuessBox from '../components/GuessBox.vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import CustomPopUp from '../components/CustomPopUp.vue';
 
 export default defineComponent({
   name: 'GamePage',
   components: {
     QuestionBox,
     GuessBox,
+    CustomPopUp
   },
   setup() {
     // Access the store
@@ -49,6 +40,9 @@ export default defineComponent({
     const country = computed(() => gameStore.correctCountry);
     const showPopup = ref(gameStore.isGameOver);
     const shouldShow = ref(false);
+    const popUpTitle = computed(() => gameStore.won ? 'Congratulations!' : 'Game Over');
+    const popUpText = computed(() => gameStore.won ? "Great job! You've guessed the correct country. Keep it up!":
+            `The country was <b>${ country.value?.name }</b>. <br>Don't worry! You can get it tomorrow!`);
     onMounted(async () => {
       if(!authStore.isAuth) {
         router.push({ name: 'Home' })
@@ -79,6 +73,8 @@ export default defineComponent({
       won,
       loading,
       country,
+      popUpTitle,
+      popUpText,
       closePopup,
     };
   }

@@ -3,7 +3,7 @@
   <v-app>
     <template v-if="!isMobile">
       <v-app-bar app>
-        <v-toolbar-title>Countrydle</v-toolbar-title>
+        <v-toolbar-title>JMelzacki</v-toolbar-title>
         <v-spacer class="menu-spacer">
         </v-spacer>
         <v-btn elevation="8" tonal to="/">Home</v-btn>
@@ -14,6 +14,7 @@
         </template>
         <template v-else>
           <v-btn elevation="8" tonal to="/game">Play</v-btn>
+          <v-btn elevation="8" tonal to="/account">Account</v-btn>
           <v-btn elevation="8" tonal style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
           <span style="padding: 20px; margin-left: 20px; border-left: 1px solid grey;"> {{ authStore.user?.username }}</span>
         </template>
@@ -30,6 +31,7 @@
           </template>
           <template v-else>
             <v-btn elevation="4" size="small" to="/game">Play</v-btn>
+            <v-btn elevation="4" size="small" to="/account">Account</v-btn>
             <v-btn elevation="4" size="small" style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
           </template>
         </v-slide-group>
@@ -38,7 +40,7 @@
 
 
     <v-main>
-      <v-container>
+      <v-container class="App-container">
         <router-view /> <!-- This will display the current route component -->
       </v-container>
     </v-main>
@@ -49,15 +51,18 @@
 import { defineComponent, onMounted } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useMediaQuery } from './consumable/useMediaQuery';
+import { useRouter } from 'vue-router';
+
 
 export default defineComponent({
   name: 'App',
   setup() {
     const authStore = useAuthStore()
     const isMobile = useMediaQuery("(max-width: 800px)")
+    const router = useRouter()
     const handleLogout = () => {
       authStore.logout();
-      window.location.href = '/';
+      router.push({name: 'Home'})
     };
 
     onMounted(() => {
@@ -96,9 +101,17 @@ export default defineComponent({
   width: 120px;
 }
 
+
 @media (max-width: 600px) {
   .v-btn {
     width: 100px;
   }
+}
+
+@media (min-width: 900px) {
+  .App-container {
+    max-width: 1200px !important;
+  }
+  
 }
 </style>

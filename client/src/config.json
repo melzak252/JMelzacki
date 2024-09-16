@@ -1,3 +1,4 @@
 {
-    "apiUrl": "https://jmelzacki.com/api"
+    "apiUrl": "https://jmelzacki.com/api",
+    "version": "0.1.1"
 }

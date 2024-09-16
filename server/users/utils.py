@@ -1,14 +1,17 @@
 import os
 from datetime import UTC, datetime, timedelta
 
+from fastapi_mail import MessageSchema
+
 from db import get_db
 from db.models import User
 from db.repositories.user import UserRepository
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import BackgroundTasks, Cookie, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from jose.exceptions import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
+from utils.email import fm, fm_noreply
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
@@ -43,6 +46,7 @@ def verify_access_token(token: str):
         raise credentials_exception
     return username
 
+
 def create_verification_token(email: str):
     expiration = datetime.now() + timedelta(hours=24)  # Token valid for 24 hours
     to_encode = {"email": email, "exp": expiration}
@@ -68,7 +72,8 @@ async def get_current_user(
     access_token: str = Cookie(None), session: AsyncSession = Depends(get_db)
 ) -> User:
     username = verify_access_token(access_token)
-    user = await UserRepository(session).get_user(username)
+    user = await UserRepository(session).get_veified_user_by_username(username)
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -76,3 +81,21 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+async def send_verification_email(
+    user: User, background_tasks: BackgroundTasks
+) -> None:
+    token = create_verification_token(user.email)
+
+    verification_url = f"https://jmelzacki.com/api/verify-email?token={token}"
+    message = MessageSchema(
+        subject="Verify Your Email",
+        recipients=[user.email],  # List of recipients
+        subtype="html",
+        template_body={"username": user.username, "verification_url": verification_url},
+    )
+
+    background_tasks.add_task(
+        fm_noreply.send_message, message, template_name="verification_email.html"
+    )

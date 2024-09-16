@@ -1,6 +1,15 @@
 from passlib.context import CryptContext
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -17,6 +26,8 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+
     # Relationships
     questions = relationship("Question", back_populates="user")
     permissions = relationship(
@@ -133,8 +144,24 @@ class SentEmail(Base):
     recipient = Column(String(255), nullable=False)  # Email of the recipient
     subject = Column(String(255), nullable=False)  # Email subject
     body = Column(Text, nullable=False)  # Email body
-    status = Column(String(50), nullable=False, default="sent")  # Status (e.g., sent, failed)
-    created_at = Column(DateTime, default=func.now())  # Timestamp of when the email was sent
+    status = Column(
+        String(50), nullable=False, default="sent"
+    )  # Status (e.g., sent, failed)
+    created_at = Column(
+        DateTime, default=func.now()
+    )  # Timestamp of when the email was sent
 
     def __repr__(self):
         return f"<SentEmail(id={self.id}, recipient='{self.recipient}', subject='{self.subject}')>"
+
+
+class AccountUpdate(Base):
+    __tablename__ = "account_update"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"))
+
+    username = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    added_date = Column(DateTime, default=func.now())

@@ -57,9 +57,9 @@ export default {
         { title: "Containerization with Docker", subtitle: "Containerized all services using Docker Compose, managed by an Nginx container", color: "purple" },
         { title: "Hosting on Linode", subtitle: "Deployed on a Debian 11 server at Linode", color: "brown" },
         { title: "Qdrant RAG Enhancing", subtitle: "Integrate Qdrant to enhance data retrieval for creating context for country quiz ", color: "cyan" },
+        { title: "Add Email Verification", subtitle: "Implement email verification for new users", color: "light-green" },
       ],
       plannedItems: [
-        { title: "Add Email Verification", subtitle: "Implement email verification for new users", color: "light-green" },
         { title: "More Visual Updates", subtitle: "Plan for ongoing improvements in UI/UX", color: "pink" }
       ]
     };

@@ -5,6 +5,8 @@ import PortfolioPage from "./pages/PortfolioPage.vue";
 import AboutMePage from "./pages/AboutMePage.vue";
 import GamePage from "./pages/GamePage.vue";
 import SignPage from "./pages/SignPage.vue";
+import AccountPage from "./pages/AccountPage.vue";
+import { useAuthStore } from "./stores/auth";
 
 const routes = [
   {
@@ -28,9 +30,28 @@ const routes = [
     component: GamePage,
   },
   { path: "/sign", name: "Sign", component: SignPage },
+  { path: "/account", name: "Account", component: AccountPage },
 ];
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+
+router.beforeEach((to, _from, next) => {
+  const store = useAuthStore()
+  console.log(to.path !== '/game', store.isAuth)
+  // we wanted to use the store here
+  if (to.path === '/game' && !store.isAuth) next('/sign');
+  else if(to.path === '/sign' && store.isAuth) next("/");
+  else next();
+})
+
+router.beforeEach(() => {
+  // ✅ This will work because the router starts its navigation after
+  // the router is installed and pinia will be installed too
+  // const store = useAuthStore()
+
+  // if (to.meta.requiresAuth && !store.isAuth) return '/login'
+})

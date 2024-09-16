@@ -53,6 +53,7 @@ export default defineComponent({
     };
 
     const sendGuess = () => {
+      guessInput.value = guessInput.value.trim();
       if (!guessInput.value) return;
       const guess = guessInput.value;
       gameStore.makeGuess(guess);

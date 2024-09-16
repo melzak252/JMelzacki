@@ -2,6 +2,7 @@ import axios from 'axios';
 import config from '../config.json';
 import { User } from '../stores/auth';
 
+console.log(config.version);
 const apiClient = axios.create({
   baseURL: config.apiUrl,
   withCredentials: true,   // Include credentials for cross-origin requests
@@ -67,6 +68,12 @@ export const apiService = {
 
   endGame() {
     return apiClient.get('/countrydle/end');  // End the game and get the final result (country and explanations)
+  },
+  updateUser(user: User) {
+    return apiClient.post('/users/update', user);  // End the game and get the final result (country and explanations)
+  },
+  changePassword(password: string) {
+    return apiClient.post('/users/change/password', { password });  // End the game and get the final result (country and explanations)
   },
 
 };

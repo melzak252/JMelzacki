@@ -40,6 +40,11 @@ async def init_qdrant(session: AsyncSession):
         )
 
     if client.collection_exists(COLLECTION_NAME):
+        client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name='country_id',
+            field_schema='integer'  # or 'keyword' if your ID is textual
+        )
         return
 
     snapshot_path = Path("/qdrant/snapshots/countries/countries-base.snapshot")

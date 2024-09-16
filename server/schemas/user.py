@@ -23,6 +23,11 @@ class UserCreate(BaseModel):
     password: str
 
 
+class UserUpdate(BaseModel):
+    username: str
+    email: EmailStr
+
+
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -45,6 +50,11 @@ class UserDisplay(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ChangePassword(BaseModel):
+    password: str
+
 
 class GoogleSignIn(BaseModel):
     credential: str
