@@ -21,8 +21,9 @@
     </div>
     <v-row>
       <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
-        <v-card outlined :class="getRowClass(entry.response)" class="pa-4">
-          <v-card-title>{{ entry.guess }} - {{ entry.response }}</v-card-title>
+        <v-card outlined :class="getRowClass(entry.response)" class="pa-4 guess-card">
+          <v-card-title style="align-items: center; width: min-content; max-width: calc(100% - 75px);">{{ entry.guess }} </v-card-title>
+          <v-icon size="50">{{ entry.response === "True"? 'mdi-check-bold': 'mdi-close-thick' }}</v-icon>
         </v-card>
       </v-col>
     </v-row>
@@ -104,5 +105,11 @@ export default defineComponent({
 
 .guess-container {
   padding: 0.5rem 1rem;
+}
+
+.guess-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 </style>

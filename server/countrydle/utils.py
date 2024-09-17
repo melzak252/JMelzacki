@@ -8,70 +8,159 @@ from qdrant.utils import get_fragments_matching_question, add_question_to_qdrant
 from qdrant import COLLECTION_NAME
 from schemas.country import DayCountryDisplay
 from db.repositories.countrydle import CountrydleRepository
-from schemas.countrydle import GuessCreate, QuestionCreate
+from schemas.countrydle import GuessCreate, QuestionCreate, QuestionEnhanced
 from db.repositories.country import CountryRepository
 
 
+async def enhance_question(question: str) -> QuestionEnhanced:
+    system_prompt = """
+You are an AI assistant for a game where players guess a country by asking True/False questions. 
+Your task is to:
+
+1. Receive a user's question.
+2. Retrieve the meaning of the user's question.
+3. Determine if it is a valid True/False question about possible country.
+4. If It's valid then improve the question by make it more obvious about its intent.
+5. If It's not valid then provide an explanation why the question is not valid.
+
+### Output Format
+Answer with JSON format and nothing else. 
+Use the specific format:
+{
+  "valid": true | false,
+  "question": "Improved question if question is valid",
+  "explanation": "Explanation if question is not valid"
+}
+
+### Examples
+User's Question: Is it in Europe?
+Output: 
+{
+  "valid": true,
+  "question": "Is the country located in Europe?"
+}
+
+User's Question: Tell me about its history
+Output:
+{
+  "valid": false,
+  "explanation": "This is not a True/False question."
+}
+
+User's Question: Is it seychelles?
+{
+  "valid": true,
+  "question": "Is the country Seychelles?"
+}
+
+User's Question: Is this island/s country
+{
+  "valid": true,
+  "question": "Is the country an island nation?"
+}
+
+User's Question: "asdfghjkl"
+{
+  "valid": false,
+  "explanation": "The input is gibberish and not a valid True/False question."
+}
+"""
+
+    question_prompt = f"""User's Question: {question}"""
+
+    prompts = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": question_prompt},
+    ]
+    model = os.getenv("QUIZ_MODEL")
+
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model=model,
+        messages=prompts,
+        response_format={"type": "json_object"},
+    )
+
+    answer = response.choices[0].message.content
+
+    try:
+        answer_dict: dict = json.loads(answer)
+    except json.JSONDecodeError:
+        print(answer)
+        raise
+
+    return QuestionEnhanced(
+        original_question=question,
+        valid=answer_dict["valid"],
+        question=answer_dict.get("question", None),
+        explanation=answer_dict.get("explanation", None),
+    )
+
+
 async def ask_question(
-    question: str, day_country: DayCountry, user: User, session: AsyncSession
+    question: QuestionEnhanced,
+    day_country: DayCountry,
+    user: User,
+    session: AsyncSession,
 ) -> Question:
 
     fragments, question_vector = await get_fragments_matching_question(
-        question, day_country, COLLECTION_NAME, session
+        question.question, day_country, COLLECTION_NAME, session
     )
     context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
     country: Country = await CountryRepository(session).get(day_country.country_id)
 
     system_prompt = f"""
-    You are the game master for a country guessing game where the player tries to guess a specific country based on your responses.
+You are an AI assistant in a game where players try to guess a country by asking True/False questions. 
+Your task is to:
+1. Receive a valid True/False question from the player.
+2. Use the provided country and context to answer the question accurately.
 
-    ## Answer Guidelines:
-        - True: If you are fully confident that the answer is accurate.
-        - False: If you are fully confident that the answer is inaccurate.
-        - NA: If you do not know the answer or if the information is not available.
-        - Error: If the question is not a simple True/False question.
-    
-    ## Contextual Integration: 
-        - Incorporate any relevant details from the provided context about the country into your explanations.
+Instructions:
+- Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
+- If you cannot determine the answer even with general knowledge, set "answer" to null.
+- Incorporate any relevant details from the provided context about the country into your explanations.
+- For any questions about events or information from April 2024 onwards, set "answer" to null
 
-    ### Country to Guess: {country.name}
-    ### context: 
-    [...]
-    {context}
-    [...]
+### Country to Guess: {country.name}
+### Context: 
+[...]
+{context}
+[...]
 
-    ### Task
-    You are answering the question with your best knowledge.
-    Answer with JSON forma and nothing else. Use the specific format:
-    {{
-    "answer": "True | False | NA | Error",
-    "explanation": "Your explanation for your answer"
-    }}
-    ### 
-    
-    ### Examples of answers
-    Country: France. Question: Is your country known for its wines?
-    {{
-        "answer": "True",
-        "explanation": "France is known for its Bordeaux, Champagne and many more!"
-    }}
-    Country: China. Question: Am I in Europe?
-    {{
-        "answer": "False",
-        "explanation": "Chaina is located in Asia."
-    }}
-    If a question is too ambiguous, respond with:
-    {{
-        "answer": "NA",
-        "explanation": "The question is too vague to answer correctly."
-    }}
-    If the question contains unintelligible text (e.g., random characters), respond with:
-    {{
-        "answer": "Error",
-        "explanation": "The question contains gibberish."
-    }}
-    """
-    question_prompt = f"""Question: {question}"""
+### Output Format
+You are answering the question with your best knowledge.
+Answer with JSON forma and nothing else. Use the specific format:
+{{
+"answer": true | false | null,
+"explanation": "Your explanation for your answer."
+}}
+### 
+
+### Examples of answers
+Country: France. Question: Is your country known for its wines?
+{{
+    "answer": true,
+    "explanation": "France is known for its Bordeaux, Champagne and many more!"
+}}
+Country: China. Question: Am I in Europe?
+{{
+    "answer": false,
+    "explanation": "China is located in Asia."
+}}
+Country: Brazil. Question: Is the country's average annual rainfall over 2000 millimeters?
+{{
+    "answer": null,
+    "explanation": "The question is too vague to answer correctly."
+}}
+
+Country: Japan. Question: Has the country hosted the 2025 World Expo?
+{{
+  "answer": null,
+  "explanation": "I cannot provide information about events occurring after April 2024."
+}}
+"""
+    question_prompt = f"""Question: {question.question}"""
 
     prompts = [
         {"role": "system", "content": system_prompt},
@@ -97,7 +186,9 @@ async def ask_question(
     question_create = QuestionCreate(
         user_id=user.id,
         day_id=day_country.id,
-        question=question,
+        original_question=question.original_question,
+        valid=question.valid,
+        question=question.question,
         answer=answer_dict["answer"],
         explanation=answer_dict["explanation"],
         context=context,

@@ -8,6 +8,7 @@ from schemas.countrydle import (
     GuessBase,
     GuessDisplay,
     QuestionBase,
+    QuestionCreate,
     QuestionDisplay,
     UserHistory,
 )
@@ -86,9 +87,9 @@ async def ask_question(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
-    daily_country = await CountrydleRepository(session).get_today_country()
+    day_country = await CountrydleRepository(session).get_today_country()
 
-    if await CountrydleRepository(session).is_player_game_over(user, daily_country):
+    if await CountrydleRepository(session).is_player_game_over(user, day_country):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User finished the game already!",
@@ -97,7 +98,7 @@ async def ask_question(
     if (
         len(
             await CountrydleRepository(session).get_questions_for_user_day(
-                user, daily_country
+                user, day_country
             )
         )
         >= 10
@@ -107,9 +108,24 @@ async def ask_question(
             detail="User cannot ask more questions than 10!",
         )
 
+    enh_question = await gutils.enhance_question(question.question)
+    if not enh_question.valid:
+        question_create = QuestionCreate(
+            user_id=user.id,
+            day_id=day_country.id,
+            original_question=enh_question.original_question,
+            valid=enh_question.valid,
+            question=enh_question.question,
+            answer=None,
+            explanation=enh_question.explanation,
+            context=None,
+        )
+
+        return await CountrydleRepository(session).create_question(question_create)
+
     return await gutils.ask_question(
-        question=question.question,
-        day_country=daily_country,
+        question=enh_question,
+        day_country=day_country,
         user=user,
         session=session,
     )

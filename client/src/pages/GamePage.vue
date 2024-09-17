@@ -1,5 +1,5 @@
 <template>
-  <v-container class="game-page">
+  <div class="game-page">
     <div class="game-container">
       <QuestionBox />
       <GuessBox />
@@ -10,7 +10,7 @@
       :popUpTitle="popUpTitle"
       :popUpText="popUpText"
     />
-  </v-container>
+  </div>
 </template>
 
 <script lang="ts">

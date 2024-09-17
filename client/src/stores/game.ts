@@ -1,12 +1,16 @@
 import { defineStore } from 'pinia';
 import { apiService } from '../services/api';
 
+export interface Question {
+  original_question: string;
+  question: string;
+  answer: boolean | null;
+  valid: boolean;
+  explanation?: string;
+}
+
 interface GameState {
-  questionsHistory: Array<{
-    question: string;
-    answer: string;
-    explanation?: string;
-  }>;
+  questionsHistory: Array<Question>;
   guessHistory: Array<{
     guess: string;
     response: string;
@@ -29,7 +33,7 @@ interface GameState {
 export const useGameStore = defineStore('game', {
   // State section
   state: (): GameState => ({
-    questionsHistory: [] as Array<{ question: string; answer: string, explanation?: string }>,
+    questionsHistory: [] as Array<Question>,
     guessHistory: [] as Array<{ guess: string; response: string; }>,
     remainingQuestions: 10,
     remainingGuesses: 3,
@@ -75,7 +79,7 @@ export const useGameStore = defineStore('game', {
       this.loading = true;
       try {
         const response = await apiService.askQuestion(question);  
-        this.questionsHistory.push({ question, answer: response.data.answer });
+        this.questionsHistory.push({ ...response.data });
         this.remainingQuestions--;
       } catch (err) {
         this.error = 'Failed to ask the question.';

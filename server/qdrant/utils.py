@@ -44,9 +44,7 @@ def search_matches(
             must=[
                 FieldCondition(
                     key="country_id",
-                    match=MatchValue(
-                        value=country_id,
-                    ),
+                    match=MatchValue(value=country_id),
                 )
             ]
         ),

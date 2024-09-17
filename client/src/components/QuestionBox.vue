@@ -21,9 +21,21 @@
     </div>
     <v-row>
       <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
-        <v-card outlined :class="getRowClass(entry.answer)" class="pa-4" style="overflow: initial; z-index: initial">
-          <v-card-title>{{ entry.question }} - {{ entry.answer }}</v-card-title>
-          <v-card-text>{{ entry.explanation }}</v-card-text>
+        <v-card outlined :class="getRowClass(entry)" class="pa-2" style="overflow: initial; z-index: initial">
+            <div class="question-layout" style="align-items: center;">
+              <div style="width: max-content; max-width: 100%;">
+                <v-card-title style="justify-self: center;">
+                  {{ entry.question }}
+                </v-card-title>
+                <v-card-subtitle>{{ entry.original_question }}</v-card-subtitle>
+                <v-card-text>{{ entry.explanation }}</v-card-text>
+              </div>
+              <v-icon size="75" style="margin-left: auto;">
+                {{ (!entry.valid || entry.answer === null) ? 'mdi-help' : (entry.answer ? 'mdi-check-bold' :
+                'mdi-close-thick')}}
+              </v-icon>
+            </div>
+
         </v-card>
       </v-col>
     </v-row>
@@ -32,13 +44,16 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
-import { useGameStore } from '../stores/game';
+import { Question, useGameStore } from '../stores/game';
+import { useMediaQuery } from '../consumable/useMediaQuery';
 
 export default defineComponent({
   name: 'QuestionBox',
   setup() {
     const gameStore = useGameStore(); // Access the Pinia store
     // Access state from the store
+    const isMobile = useMediaQuery("(max-width: 1000px)")
+
     const questionInput = ref('');
     const isGameOver = computed(() => gameStore.isGameOver);
     const questionsHistory = computed(() => gameStore.questionsHistory);
@@ -51,10 +66,9 @@ export default defineComponent({
     });
 
     // Determine the row class based on the answer
-    const getRowClass = (answer: string) => {
-      if (answer === 'True') return 'green-outline';
-      if (answer === 'False') return 'red-outline';
-      return 'orange-outline';
+    const getRowClass = (entry: Question) => {
+      if (!entry.valid || entry.answer === null) return 'orange-outline';
+      return entry.answer ? 'green-outline' : 'red-outline';
     };
 
     // Handle sending the question
@@ -76,6 +90,7 @@ export default defineComponent({
       questionInput,
       canSend,
       isGameOver,
+      isMobile,
       questionsHistory,
       reversedQuestionsHistory,
       loading,
@@ -119,4 +134,26 @@ export default defineComponent({
   align-items: flex-start;
   padding: 0.5rem 1rem;
 }
+
+.question-layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+/* .dektop-question-layout {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: auto 75px;
+  align-items: center;
+}
+
+.mobile-question-layout {
+  display: flex;
+  flex-direction: column;
+  grid-template-rows: auto 75px;
+  justify-content: flex-start;
+  align-items: center;
+} */
 </style>

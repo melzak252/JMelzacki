@@ -10,7 +10,7 @@ from db.repositories.document import DocumentRepository, FragmentRepository
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import Distance, PointStruct, VectorParams, IntegerIndexParams
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .utils import get_points
@@ -34,54 +34,12 @@ async def init_qdrant(session: AsyncSession):
             vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),
         )
         client.create_payload_index(
-            collection_name='questions',
-            field_name='country_id',
-            field_schema='integer'
+            collection_name="questions", field_name="country_id", field_schema="integer"
         )
-
-    if client.collection_exists(COLLECTION_NAME):
-        client.create_payload_index(
-            collection_name=COLLECTION_NAME,
-            field_name='country_id',
-            field_schema='integer'  # or 'keyword' if your ID is textual
-        )
-        return
-
-    snapshot_path = Path("/qdrant/snapshots/countries/countries-base.snapshot")
-    if snapshot_path.exists():
-        print("Loading QDRANT snapshot!")
-        try:
-            client.recover_snapshot(COLLECTION_NAME, location=f"file://{snapshot_path}")
-        except ResponseHandlingException:
-            tries = 5
-            interval = 5
-            for _ in range(tries):
-                if client.collection_exists(COLLECTION_NAME):
-                    return
-                await asyncio.sleep(interval)
- 
-        client.create_payload_index(
-            collection_name=COLLECTION_NAME,
-            field_name='country_id',
-            field_schema='integer'  # or 'keyword' if your ID is textual
-        )
-        return
-
-    client.create_collection(
-        collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),
-    )
-     
-    client.create_payload_index(
-        collection_name=COLLECTION_NAME,
-        field_name='country_id',
-        field_schema='integer'  # or 'keyword' if your ID is textual
-    )
-
-    await populate_qdrant(session)
 
 
 async def populate_qdrant(session: AsyncSession):
+
     d_repo = DocumentRepository(session)
     c_repo = CountryRepository(session)
     f_repo = FragmentRepository(session)
@@ -111,6 +69,7 @@ async def populate_qdrant(session: AsyncSession):
                 },
             )
             points.append(point)
+
         if points:
             client.upsert(collection_name=COLLECTION_NAME, points=points)
 

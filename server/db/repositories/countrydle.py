@@ -118,9 +118,9 @@ class CountrydleRepository:
         self, user: User, day: DayCountry
     ) -> List[Question]:
         questions_result = await self.session.execute(
-            select(Question).where(
-                Question.user_id == user.id, Question.day_id == day.id
-            ).order_by(Question.id.asc())
+            select(Question)
+            .where(Question.user_id == user.id, Question.day_id == day.id)
+            .order_by(Question.id.asc())
         )
         return questions_result.scalars().all()
 

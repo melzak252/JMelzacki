@@ -11,12 +11,21 @@ class QuestionBase(BaseModel):
     question: str
 
 
-class QuestionCreate(QuestionBase):
-    answer: str
+class QuestionEnhanced(BaseModel):
+    original_question: str
+    question: str | None
+    valid: bool
+    explanation: str | None
+
+    class Config:
+        from_attributes = True
+
+
+class QuestionCreate(QuestionEnhanced):
+    answer: bool | None
     user_id: int
     day_id: int
-    explanation: str
-    context: str
+    context: str | None
 
     class Config:
         from_attributes = True
@@ -24,8 +33,10 @@ class QuestionCreate(QuestionBase):
 
 class QuestionDisplay(BaseModel):
     id: int
-    question: str
-    answer: str
+    original_question: str
+    question: str | None
+    valid: bool
+    answer: bool | None
     user_id: int
     day_id: int
     asked_at: datetime
