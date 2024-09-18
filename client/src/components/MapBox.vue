@@ -1,41 +1,30 @@
 <template>
-    <v-card class="map-box">
-      <v-card-title @click="toggleMap" style="cursor: pointer;">
-        World Map <v-icon>{{ isMapVisible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-      </v-card-title>
-      <v-expand-transition>
-        <div v-show="isMapVisible" class="map-container">
-          <l-map
-            ref="mapRef"
-            :zoom="zoom"
-            :center="center"
-            
-            style="height: 500px; width: 100%;"
-          >
+  <v-card class="map-box">
+    <v-card-title @click="toggleMap" style="cursor: pointer;">
+      World Map <v-icon>{{ isMapVisible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+    </v-card-title>
+    <v-expand-transition>
+      <div v-show="isMapVisible" class="map-container">
+        <l-map ref="mapRef" :zoom="zoom" :center="center" style="height: 500px; width: 100%;">
 
-            <l-geo-json
-              ref="geoJsonRef"
-              :geojson="countriesData"
-              :options-style="styleCountries"
-              :options="geoJsonOptions"
-              @geojson-feature-click="onCountryClicked"
-              @geojson-feature-mouseover="onCountryMouseOver"
-              @geojson-feature-mouseout="onCountryMouseOut"
-            />
-            <v-btn class="reset-btn" @click="resetMap" title="Reset selected countries">
-              <span class="mdi mdi-restore" />
+          <l-geo-json ref="geoJsonRef" :geojson="countriesData" :options-style="styleCountries"
+            :options="geoJsonOptions" @geojson-feature-click="onCountryClicked"
+            @geojson-feature-mouseover="onCountryMouseOver" @geojson-feature-mouseout="onCountryMouseOut" />
+          <v-btn class="reset-btn" @click="resetMap" title="Reset selected countries">
+            <span class="mdi mdi-restore" />
           </v-btn>
-          </l-map>
+        </l-map>
 
-        </div>
-      </v-expand-transition>
-    </v-card>
-  </template>
+      </div>
+    </v-expand-transition>
+  </v-card>
+</template>
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
 import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet';
 import { useGameStore } from '../stores/game';
+import L, { GeoJSON, LeafletMouseEvent, Layer, Path } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 export default defineComponent({
@@ -48,7 +37,7 @@ export default defineComponent({
   setup() {
     const gameStore = useGameStore();
 
-    const geoJsonRef = ref(null);
+    const geoJsonRef = ref<InstanceType<typeof LGeoJson> | null>(null);
     const zoom = ref(2);
     const center = ref<[number, number]>([20, 0]);
     const isMapVisible = ref(true);
@@ -69,36 +58,35 @@ export default defineComponent({
 
     // Style each country
     const styleCountries = (feature) => {
-        const countryName = feature.properties.SOVEREIGNT; // Adjust property name if needed
-        // const isGuessed = gameStore.guessedCountries.includes(countryName);
-        const isSelected = gameStore.selectedCountries.includes(countryName.toUpperCase());
-        return {
-            fillColor: isSelected? '#cc2222': '#22222',
-            weight: 1,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0.7,
-        };
+      const countryName = feature.properties.SOVEREIGNT; // Adjust property name if needed
+      // const isGuessed = gameStore.guessedCountries.includes(countryName);
+      const isSelected = gameStore.selectedCountries.includes(countryName.toUpperCase());
+      return {
+        fillColor: isSelected ? '#cc2222' : '#22222',
+        weight: 1,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.7,
+      };
     };
 
     // Handle country click events
     const onCountryClicked = (event) => {
-        const countryName = event.target.feature.properties.SOVEREIGNT.toUpperCase(); // Adjust property name if needed
-        const isSelected = gameStore.handleCountryClick(countryName);
+      const countryName = event.target.feature.properties.SOVEREIGNT.toUpperCase(); // Adjust property name if needed
+      const isSelected = gameStore.handleCountryClick(countryName);
 
-        if (geoJsonRef.value) {
-          for (const [key, value] of Object.entries(geoJsonRef.value.leafletObject._layers)){
-            const layer = value as any;
-            if (layer.feature && layer.feature.properties.SOVEREIGNT.toUpperCase() === countryName) {
-              layer.setStyle({
-                fillColor: isSelected? '#cc2222': '#22222',
-              });
-            }
-          } 
-        }
+      if (!geoJsonRef.value) return;
+
+      for (const layer of Object.values(geoJsonRef.value.leafletObject._layers)) {
+        const l = layer as L.Path & { feature: GeoJSON.Feature };
+        if (!l.feature || l.feature.properties.SOVEREIGNT.toUpperCase() !== countryName) continue;
+        l.setStyle({
+          fillColor: isSelected ? '#cc2222' : '#22222',
+        });
+      }
 
     };
-    
+
     const onCountryMouseOut = (event: any) => {
       const layer = event.target;
       layer.setStyle(styleCountries(layer.feature));
@@ -106,21 +94,21 @@ export default defineComponent({
     };
 
     const onCountryMouseOver = (event) => {
-        const layer = event.target;
-        const sovereigntName = layer.feature.properties.SOVEREIGNT; // Adjust property name if needed
-        const countryName = layer.feature.properties.ADMIN; // Adjust property name if needed
-        let tooltip = `<b>${countryName}</b>`;
-        if(sovereigntName !== countryName) tooltip = `<b>${sovereigntName}</b><br/>${countryName}`
-        layer.setStyle({
-            weight: 2,
-            color: '#666666',
-            fillOpacity: 0.7,
-        });
-        layer.bindTooltip(tooltip).openTooltip();
+      const layer = event.target;
+      const sovereigntName = layer.feature.properties.SOVEREIGNT; // Adjust property name if needed
+      const countryName = layer.feature.properties.ADMIN; // Adjust property name if needed
+      let tooltip = `<b>${countryName}</b>`;
+      if (sovereigntName !== countryName) tooltip = `<b>${sovereigntName}</b><br/>${countryName}`
+      layer.setStyle({
+        weight: 2,
+        color: '#666666',
+        fillOpacity: 0.7,
+      });
+      layer.bindTooltip(tooltip).openTooltip();
     };
     const geoJsonOptions = {
       style: styleCountries,
-      onEachFeature: (feature: any, layer: any) => {
+      onEachFeature: (_: any, layer: any) => {
         layer.on({
           click: onCountryClicked,
           mouseover: onCountryMouseOver,
@@ -131,14 +119,15 @@ export default defineComponent({
 
     const resetMap = () => {
       gameStore.selectedCountries = [];
-      if (geoJsonRef.value) {
-          for (const [key, value] of Object.entries(geoJsonRef.value.leafletObject._layers)){
-            const layer = value as any;
-            layer.setStyle({
-              fillColor: '#22222',
-            });
-          } 
-        }
+      if (!geoJsonRef.value) return;
+      
+      for (const layer of Object.values(geoJsonRef.value.leafletObject._layers)) {
+        const l = layer as L.Path & { feature: GeoJSON.Feature };
+        if (!l.feature) continue;
+        l.setStyle({
+          fillColor: '#22222',
+        });
+      }
     }
 
     onMounted(() => {
@@ -162,9 +151,10 @@ export default defineComponent({
   },
 });
 </script>
-  
-  <style>
-  @import 'leaflet/dist/leaflet.css';
+
+<style>
+@import 'leaflet/dist/leaflet.css';
+
 .map-box {
   height: 100%;
   padding: 20px;
@@ -180,13 +170,12 @@ export default defineComponent({
 *,
 *:focus,
 *:hover {
-    outline: none;
+  outline: none;
 }
-  </style>
-  
-  <style>
+</style>
 
-  .reset-btn {
+<style>
+.reset-btn {
   position: relative;
   padding: 0 !important;
   width: 32px !important;
