@@ -37,6 +37,14 @@ async def init_qdrant(session: AsyncSession):
             collection_name="questions", field_name="country_id", field_schema="integer"
         )
 
+    client.create_payload_index(
+        collection_name=COLLECTION_NAME,
+        field_name="country_id",
+        field_schema=IntegerIndexParams(
+            type="integer", is_principal=True, lookup=True, range=False
+        ),
+    )
+
 
 async def populate_qdrant(session: AsyncSession):
 
