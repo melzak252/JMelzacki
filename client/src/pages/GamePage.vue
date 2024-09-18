@@ -1,12 +1,14 @@
 <template>
   <div class="game-page">
     <div class="game-container">
-      <QuestionBox />
-      <GuessBox />
+      <MapBox class="map-box"/>
+      <QuestionBox class="question-box" />
+      <GuessBox class="guess-box"/>
     </div>
+    <AdSpace />
     <CustomPopUp
-      :showPopup="showPopup" 
-      @update:showPopup="showPopup = $event" 
+      :showPopup="showPopup"
+      @update:showPopup="showPopup = $event"
       :popUpTitle="popUpTitle"
       :popUpText="popUpText"
     />
@@ -18,16 +20,20 @@ import { computed, defineComponent, onMounted, ref, watch } from 'vue';
 import { useGameStore } from '../stores/game';
 import QuestionBox from '../components/QuestionBox.vue';
 import GuessBox from '../components/GuessBox.vue';
+import MapBox from '../components/MapBox.vue';
+import AdSpace from '../components/AdSpace.vue';
+import CustomPopUp from '../components/CustomPopUp.vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import CustomPopUp from '../components/CustomPopUp.vue';
 
 export default defineComponent({
   name: 'GamePage',
   components: {
     QuestionBox,
     GuessBox,
-    CustomPopUp
+    MapBox,
+    AdSpace,
+    CustomPopUp,
   },
   setup() {
     // Access the store
@@ -83,25 +89,35 @@ export default defineComponent({
 
 <style scoped>
 .game-page {
-  height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .game-container {
   display: grid;
-  grid-template-columns: auto 400px;
+  grid-template-columns: 1fr 1fr; 
+  gap: 20px;
   max-width: 1440px;
-  column-gap: 20px;
   width: 100%;
 }
 
-@media (max-width: 768px) {
+.map-box {
+  grid-column: 1 / 3;
+}
+
+@media (max-width: 800px) {
   .game-container {
-    display: grid;
-    grid-template-columns: auto;
-    grid-template-rows: auto auto;
-    row-gap: 15px;
+    grid-template-columns: 1fr; 
+    grid-template-rows: auto auto auto;
+    column-gap: 0px;
+  }
+  .question-box {
+    grid-row: 2;
+  }
+  .guess-box {
+    grid-row: 3;
   }
 }
+
 </style>

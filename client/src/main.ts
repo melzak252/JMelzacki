@@ -5,7 +5,7 @@ import { createVuetify } from "vuetify";
 import { router } from "./router"; // Import the router
 import "vuetify/styles"; // Import Vuetify styles
 import "@mdi/font/css/materialdesignicons.css"; // Material Design Icons
-
+import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet';
 import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import { createPinia } from "pinia";
@@ -50,3 +50,6 @@ app
   .mount("#app");
 
 app.component("CustomPopUp", CustomPopUp);
+app.component('l-map', LMap);
+app.component('l-tile-layer', LTileLayer);
+app.component('l-marker', LMarker);

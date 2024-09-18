@@ -26,6 +26,8 @@
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.5.0",
     "@vitejs/plugin-vue": "^5.1.2",
+    "@vue-leaflet/vue-leaflet": "^0.10.1",
+    "leaflet": "^1.9.4",
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
     "vue-tsc": "^2.0.29"

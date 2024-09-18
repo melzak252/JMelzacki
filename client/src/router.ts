@@ -41,7 +41,6 @@ export const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
   const store = useAuthStore()
-  console.log(to.path !== '/game', store.isAuth)
   // we wanted to use the store here
   if (to.path === '/game' && !store.isAuth) next('/sign');
   else if(to.path === '/sign' && store.isAuth) next("/");

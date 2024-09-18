@@ -1,5 +1,5 @@
 <template>
-  <v-card class="chat-box">
+  <v-card class="question-box">
     <v-card-title>Ask Your Questions</v-card-title>
     <p style="padding-left: 1rem;">You have {{ remainingQuestions }} qestions remaining.</p>
     <div class="sent-box ma-0">
@@ -22,20 +22,15 @@
     <v-row>
       <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
         <v-card outlined :class="getRowClass(entry)" class="pa-2" style="overflow: initial; z-index: initial">
-            <div class="question-layout" style="align-items: center;">
-              <div style="width: max-content; max-width: 100%;">
-                <v-card-title style="justify-self: center;">
-                  {{ entry.question }}
-                </v-card-title>
-                <v-card-subtitle>{{ entry.original_question }}</v-card-subtitle>
-                <v-card-text>{{ entry.explanation }}</v-card-text>
-              </div>
-              <v-icon size="75" style="margin-left: auto;">
-                {{ (!entry.valid || entry.answer === null) ? 'mdi-help' : (entry.answer ? 'mdi-check-bold' :
-                'mdi-close-thick')}}
-              </v-icon>
-            </div>
-
+            <v-icon size="80" style="margin-left: auto;" class="question-icon">
+              {{ (!entry.valid || entry.answer === null) ? 'mdi-help' : (entry.answer ? 'mdi-check-bold' :
+              'mdi-close-thick')}}
+            </v-icon>
+            <v-card-title title="Improved question by system" style="justify-self: center;">
+              {{ entry.question }}
+            </v-card-title>
+            <v-card-subtitle title="Original question">{{ entry.original_question }}</v-card-subtitle>
+            <v-card-text>{{ entry.explanation }}</v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -104,9 +99,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.chat-box {
+.question-box {
   height: 100%;
   padding: 20px;
+  /* background-color: #f5f5f5; Light background */
 }
 
 .green-outline {
@@ -135,11 +131,6 @@ export default defineComponent({
   padding: 0.5rem 1rem;
 }
 
-.question-layout {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
 
 /* .dektop-question-layout {
   display: grid;
@@ -156,4 +147,12 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: center;
 } */
+
+.question-icon {
+  position: absolute;
+  top: calc(50% - 40px);
+  right: 40px;
+  z-index: -1;
+  opacity: 0.4;
+}
 </style>

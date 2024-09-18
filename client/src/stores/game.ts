@@ -15,6 +15,7 @@ interface GameState {
     guess: string;
     response: string;
   }>;
+  selectedCountries: Array<string>;
   remainingQuestions: number;
   remainingGuesses: number;
   isGameOver: boolean;
@@ -34,6 +35,7 @@ export const useGameStore = defineStore('game', {
   // State section
   state: (): GameState => ({
     questionsHistory: [] as Array<Question>,
+    selectedCountries: [] as Array<string>,
     guessHistory: [] as Array<{ guess: string; response: string; }>,
     remainingQuestions: 10,
     remainingGuesses: 3,
@@ -123,10 +125,20 @@ export const useGameStore = defineStore('game', {
         this.loading = false;
       }
     },
-
+    handleCountryClick(countryName: string) {
+      const index = this.selectedCountries.indexOf(countryName);
+      if (index === -1) {
+        this.selectedCountries.push(countryName);
+        return true;
+      } else {
+        this.selectedCountries.splice(index, 1);
+        return false;
+      }
+    },
     resetState() {
       this.questionsHistory = [];
       this.guessHistory = [];
+      this.selectedCountries = [];
       this.remainingQuestions = 10;
       this.remainingGuesses = 3;
       this.isGameOver = false;

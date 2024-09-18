@@ -120,6 +120,7 @@ Instructions:
 - Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
 - If you cannot determine the answer even with general knowledge, set "answer" to null.
 - Incorporate any relevant details from the provided context about the country into your explanations.
+- If the question asks whether the country is a neighbor of itself or shares boreder with itself, answer "true".
 - For any questions about events or information from April 2024 onwards, set "answer" to null
 
 ### Country to Guess: {country.name}
@@ -152,6 +153,12 @@ Country: Brazil. Question: Is the country's average annual rainfall over 2000 mi
 {{
     "answer": null,
     "explanation": "The question is too vague to answer correctly."
+}}
+
+Country: Germany. Question: Is the country a neighbor of Germany?
+{{
+    "answer": true,
+    "explanation": "A country is always considered to be a neighbor of itself."
 }}
 
 Country: Japan. Question: Has the country hosted the 2025 World Expo?
