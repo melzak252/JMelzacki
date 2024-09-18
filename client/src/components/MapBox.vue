@@ -24,8 +24,16 @@
 import { defineComponent, ref, onMounted } from 'vue';
 import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet';
 import { useGameStore } from '../stores/game';
-import L, { GeoJSON, LeafletMouseEvent } from 'leaflet';
+import * as L from 'leaflet';
+import type { Feature, Geometry } from 'geojson';
+
 import 'leaflet/dist/leaflet.css';
+
+interface FeatureProperties {
+  SOVEREIGNT: string;
+  // Add other properties if needed
+  [key: string]: any;
+}
 
 export default defineComponent({
   name: 'MapBox',
@@ -57,7 +65,16 @@ export default defineComponent({
     };
 
     // Style each country
-    const styleCountries = (feature: GeoJSON.Feature) => {
+    const styleCountries = (feature?: Feature<Geometry, FeatureProperties>): L.PathOptions => {
+      if (!feature || !feature.properties) {
+        return {
+          fillColor: '#000000', // Default fill color
+          weight: 1,
+          opacity: 1,
+          color: 'white',
+          fillOpacity: 0.7,
+        };
+      }
       const countryName = feature.properties.SOVEREIGNT; // Adjust property name if needed
       // const isGuessed = gameStore.guessedCountries.includes(countryName);
       const isSelected = gameStore.selectedCountries.includes(countryName.toUpperCase());
@@ -71,14 +88,14 @@ export default defineComponent({
     };
 
     // Handle country click events
-    const onCountryClicked = (event: LeafletMouseEvent) => {
+    const onCountryClicked = (event: L.LeafletMouseEvent) => {
       const countryName = event.target.feature.properties.SOVEREIGNT.toUpperCase(); // Adjust property name if needed
       const isSelected = gameStore.handleCountryClick(countryName);
 
-      if (!geoJsonRef.value) return;
-
-      for (const layer of Object.values(geoJsonRef.value.leafletObject._layers)) {
-        const l = layer as L.Path & { feature: GeoJSON.Feature };
+      if (geoJsonRef.value === null || geoJsonRef.value.leafletObject === undefined) return;
+      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & {_layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> }};
+      for (const layer of Object.values(lObj._layers)) {
+        const l = layer as L.Path & { feature?: Feature<Geometry, FeatureProperties> };
         if (!l.feature || l.feature.properties.SOVEREIGNT.toUpperCase() !== countryName) continue;
         l.setStyle({
           fillColor: isSelected ? '#cc2222' : '#22222',
@@ -87,13 +104,13 @@ export default defineComponent({
 
     };
 
-    const onCountryMouseOut = (event: LeafletMouseEvent) => {
+    const onCountryMouseOut = (event: L.LeafletMouseEvent) => {
       const layer = event.target;
       layer.setStyle(styleCountries(layer.feature));
       layer.closeTooltip();
     };
 
-    const onCountryMouseOver = (event: LeafletMouseEvent) => {
+    const onCountryMouseOver = (event: L.LeafletMouseEvent) => {
       const layer = event.target;
       const sovereigntName = layer.feature.properties.SOVEREIGNT; // Adjust property name if needed
       const countryName = layer.feature.properties.ADMIN; // Adjust property name if needed
@@ -108,7 +125,7 @@ export default defineComponent({
     };
     const geoJsonOptions = {
       style: styleCountries,
-      onEachFeature: (_: any, layer: any) => {
+      onEachFeature: (_: Feature<Geometry, FeatureProperties>, layer: L.Layer) => {
         layer.on({
           click: onCountryClicked,
           mouseover: onCountryMouseOver,
@@ -119,15 +136,16 @@ export default defineComponent({
 
     const resetMap = () => {
       gameStore.selectedCountries = [];
-      if (!geoJsonRef.value) return;
-      
-      for (const layer of Object.values(geoJsonRef.value.leafletObject._layers)) {
-        const l = layer as L.Path & { feature: GeoJSON.Feature };
+      if (geoJsonRef.value === null || geoJsonRef.value.leafletObject === undefined) return;
+      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & {_layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> }};
+      for (const layer of Object.values(lObj._layers)) {
+        const l = layer as L.Path & { feature?: Feature<Geometry, FeatureProperties> };
         if (!l.feature) continue;
         l.setStyle({
           fillColor: '#22222',
         });
       }
+
     }
 
     onMounted(() => {
