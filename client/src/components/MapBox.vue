@@ -24,7 +24,7 @@
 import { defineComponent, ref, onMounted } from 'vue';
 import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet';
 import { useGameStore } from '../stores/game';
-import L, { GeoJSON, LeafletMouseEvent, Layer, Path } from 'leaflet';
+import L, { GeoJSON, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 export default defineComponent({
@@ -57,7 +57,7 @@ export default defineComponent({
     };
 
     // Style each country
-    const styleCountries = (feature) => {
+    const styleCountries = (feature: GeoJSON.Feature) => {
       const countryName = feature.properties.SOVEREIGNT; // Adjust property name if needed
       // const isGuessed = gameStore.guessedCountries.includes(countryName);
       const isSelected = gameStore.selectedCountries.includes(countryName.toUpperCase());
@@ -71,7 +71,7 @@ export default defineComponent({
     };
 
     // Handle country click events
-    const onCountryClicked = (event) => {
+    const onCountryClicked = (event: LeafletMouseEvent) => {
       const countryName = event.target.feature.properties.SOVEREIGNT.toUpperCase(); // Adjust property name if needed
       const isSelected = gameStore.handleCountryClick(countryName);
 
@@ -87,13 +87,13 @@ export default defineComponent({
 
     };
 
-    const onCountryMouseOut = (event: any) => {
+    const onCountryMouseOut = (event: LeafletMouseEvent) => {
       const layer = event.target;
       layer.setStyle(styleCountries(layer.feature));
       layer.closeTooltip();
     };
 
-    const onCountryMouseOver = (event) => {
+    const onCountryMouseOver = (event: LeafletMouseEvent) => {
       const layer = event.target;
       const sovereigntName = layer.feature.properties.SOVEREIGNT; // Adjust property name if needed
       const countryName = layer.feature.properties.ADMIN; // Adjust property name if needed
