@@ -6,7 +6,14 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
-from qdrant_client.http.models import FieldCondition, Filter, MatchValue, GroupsResult
+from qdrant_client.http.models import (
+    FieldCondition,
+    Filter,
+    MatchValue,
+    GroupsResult,
+    PointGroup,
+    ScoredPoint,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 import qdrant
 
@@ -38,7 +45,7 @@ def search_matches(
     query_vector: list,
     country_id: int = None,
     limit: int = 5,
-):
+) -> List[ScoredPoint]:
     search_result: GroupsResult = qdrant.client.search_groups(
         collection_name=collection_name,
         query_vector=query_vector,  # Use the query vector to search for similar vectors
@@ -53,6 +60,7 @@ def search_matches(
                 )
             ]
         ),
+        with_payload=True,
     )
     group, *_ = search_result.groups
     return group.hits
@@ -64,7 +72,7 @@ async def get_fragments_matching_question(
     query = question
     query_vector = get_embedding(query, qdrant.EMBEDDING_MODEL)
 
-    points: list = search_matches(
+    points: List[ScoredPoint] = search_matches(
         collection_name=collection_name,
         query_vector=query_vector,
         country_id=day.country_id,
@@ -73,6 +81,7 @@ async def get_fragments_matching_question(
     f_repo = FragmentRepository(session)
     fragments = []
     for point in points:
+        print(point.id, point.payload["country_id"])
         fragment = await f_repo.get(int(point.id))
         fragments.append(fragment)
 
