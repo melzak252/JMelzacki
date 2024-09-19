@@ -21,7 +21,6 @@ import { useGameStore } from '../stores/game';
 import QuestionBox from '../components/QuestionBox.vue';
 import GuessBox from '../components/GuessBox.vue';
 import MapBox from '../components/MapBox.vue';
-import AdSpace from '../components/AdSpace.vue';
 import CustomPopUp from '../components/CustomPopUp.vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
@@ -32,7 +31,6 @@ export default defineComponent({
     QuestionBox,
     GuessBox,
     MapBox,
-    AdSpace,
     CustomPopUp,
   },
   setup() {

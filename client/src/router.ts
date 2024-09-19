@@ -6,6 +6,9 @@ import AboutMePage from "./pages/AboutMePage.vue";
 import GamePage from "./pages/GamePage.vue";
 import SignPage from "./pages/SignPage.vue";
 import AccountPage from "./pages/AccountPage.vue";
+import TermsPage from "./pages/TermsPage.vue";
+import PrivacyPage from "./pages/PrivacyPage.vue";
+import CookiePage from "./pages/CookiePage.vue";
 import { useAuthStore } from "./stores/auth";
 
 const routes = [
@@ -31,6 +34,9 @@ const routes = [
   },
   { path: "/sign", name: "Sign", component: SignPage },
   { path: "/account", name: "Account", component: AccountPage },
+  { path: "/terms", name: "Terms", component: TermsPage },
+  { path: "/privacy", name: "Privacy", component: PrivacyPage },
+  { path: "/cookie", name: "Cookie", component: CookiePage },
 ];
 
 export const router = createRouter({
