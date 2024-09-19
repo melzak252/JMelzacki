@@ -6,7 +6,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
-from qdrant_client.http.models import FieldCondition, Filter, MatchValue
+from qdrant_client.http.models import FieldCondition, Filter, MatchValue, GroupsResult
 from sqlalchemy.ext.asyncio import AsyncSession
 import qdrant
 
@@ -39,21 +39,23 @@ def search_matches(
     country_id: int = None,
     limit: int = 5,
 ):
-    search_result = qdrant.client.search(
+    search_result: GroupsResult = qdrant.client.search_groups(
+        collection_name=collection_name,
+        query_vector=query_vector,  # Use the query vector to search for similar vectors
+        group_by="country_id",  # Group results by country_id
+        group_size=limit,  # Return up to 5 points per group
+        limit=1,  # Limit to 3 groups (you can adjust as needed)
         query_filter=Filter(
             must=[
                 FieldCondition(
                     key="country_id",
-                    match=MatchValue(value=country_id),
+                    match=MatchValue(value=country_id),  # Strict match for country_id
                 )
             ]
         ),
-        collection_name=collection_name,
-        query_vector=query_vector,
-        limit=limit,
     )
-
-    return search_result
+    group, *_ = search_result.groups
+    return group.hits
 
 
 async def get_fragments_matching_question(
