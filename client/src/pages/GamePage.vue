@@ -96,7 +96,7 @@ export default defineComponent({
 
 .game-container {
   display: grid;
-  grid-template-columns: 1fr 1fr; 
+  grid-template-columns: 2fr 1fr; 
   gap: 20px;
   max-width: 1440px;
   width: 100%;
