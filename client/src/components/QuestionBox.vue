@@ -1,7 +1,7 @@
 <template>
   <v-card class="question-box">
     <v-card-title>Ask Your Questions</v-card-title>
-    <p style="padding-left: 1rem;">You have {{ remainingQuestions }} qestions remaining.</p>
+    <p style="padding-left: 1rem;">You have {{ remainingQuestions }} questions remaining.</p>
     <div class="sent-box ma-0">
       <v-text-field class="question-input" v-model="questionInput" maxlength="100" label="Ask a True/False Question"
         placeholder="Is it located in Europe?" :rules="questionRules" @keyup.enter="sendQuestion" :disabled="!canSend">

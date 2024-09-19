@@ -1,78 +1,95 @@
 <!-- src/App.vue -->
 <template>
   <v-app>
-    <template v-if="!isMobile">
-      <v-app-bar app>
-        <v-toolbar-title>JMelzacki</v-toolbar-title>
-        <v-spacer class="menu-spacer">
-        </v-spacer>
-        <v-btn elevation="8" tonal to="/">Home</v-btn>
-        <v-btn elevation="8" tonal to="/portfolio">Portfolio</v-btn>
-        <v-btn elevation="8" tonal to="/aboutme">About Me</v-btn>
-        <template v-if="!authStore.isAuth">
-          <v-btn elevation="8" tonal to="/sign">Sign in</v-btn>
-        </template>
+    <v-app-bar app>
+      <v-btn icon @click="drawer = !drawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+      <v-toolbar-title>
+        <template v-if="!authStore.isAuth">JMelzacki</template>
         <template v-else>
-          <v-btn elevation="8" tonal to="/game">Play</v-btn>
-          <v-btn elevation="8" tonal to="/account">Account</v-btn>
-          <v-btn elevation="8" tonal style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
-          <span style="padding: 20px; margin-left: 20px; border-left: 1px solid grey;"> {{ authStore.user?.username }}</span>
+          <div style="border: 1px solid white; border-radius: 3px; max-width: max-content; padding: 5px 10px;">{{ authStore.user?.username }}</div>
         </template>
-      </v-app-bar>
-    </template>
-    <template v-else>
-      <v-app-bar app>
-        <v-slide-group style="display: flex; justify-content: center; width: 100%;" show-arrows>
-          <v-btn elevation="4" size="small" tonal to="/">Home</v-btn>
-          <v-btn elevation="4" size="small" to="/portfolio">Portfolio</v-btn>
-          <v-btn elevation="4" size="small" to="/aboutme">About Me</v-btn>
-          <template v-if="!authStore.isAuth">
-            <v-btn elevation="4" size="small" to="/sign">Sign in</v-btn>
-          </template>
-          <template v-else>
-            <v-btn elevation="4" size="small" to="/game">Play</v-btn>
-            <v-btn elevation="4" size="small" to="/account">Account</v-btn>
-            <v-btn elevation="4" size="small" style="background-color: #660000;" @click="handleLogout">Logout</v-btn>
-          </template>
-        </v-slide-group>
-      </v-app-bar>
-    </template>
+      </v-toolbar-title>
 
+  </v-app-bar>
+
+  <!-- Mobile Navigation Drawer -->
+  <v-navigation-drawer v-model="drawer" app temporary @click="handleDrawerClick">
+    <v-list>
+      <v-list-item to='/'>
+        <v-list-item-title>Home</v-list-item-title>
+      </v-list-item>
+
+
+      <!-- If the user is not logged in -->
+      <template v-if="!authStore.isAuth">
+        <v-list-item to='/sign'>
+          <v-list-item-title>Sign in</v-list-item-title>
+        </v-list-item>
+      </template>
+
+      <!-- If the user is logged in -->
+      <template v-else>
+        <v-list-item to='/game'>
+          <v-list-item-title>Play</v-list-item-title>
+        </v-list-item>
+        <v-list-item to='/account'>
+          <v-list-item-title>Account</v-list-item-title>
+        </v-list-item>
+        <v-list-item style="background-color: #660000;" @click="handleLogout">
+          <v-list-item-title>Logout</v-list-item-title>
+        </v-list-item>
+      </template>
+    </v-list>
+  </v-navigation-drawer>
 
     <v-main>
       <v-container class="App-container">
         <router-view /> <!-- This will display the current route component -->
       </v-container>
     </v-main>
+    <Footer></Footer>
   </v-app>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted } from 'vue';
+import { defineComponent, onMounted, ref } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useMediaQuery } from './consumable/useMediaQuery';
 import { useRouter } from 'vue-router';
-
+import Footer from './components/Footer.vue';
 
 export default defineComponent({
   name: 'App',
+  components: {
+    Footer
+  },
   setup() {
     const authStore = useAuthStore()
     const isMobile = useMediaQuery("(max-width: 800px)")
     const router = useRouter()
+    const drawer = ref(false);
+    
     const handleLogout = () => {
       authStore.logout();
-      router.push({name: 'Home'})
+      router.push({ name: 'Home' })
     };
 
     onMounted(() => {
       authStore.checkAuth();
     });
+    
+    const handleDrawerClick = () => {
+      drawer.value = !drawer.value
+    }
 
     return {
       authStore,
       isMobile,
+      drawer,
       handleLogout,
+      handleDrawerClick
     };
   },
 });
@@ -92,7 +109,6 @@ export default defineComponent({
 </style>
 
 <style>
-
 .v-slide-group__content {
   justify-content: center;
 }
@@ -101,6 +117,17 @@ export default defineComponent({
   width: 120px;
 }
 
+.v-main {
+  height: 100%;
+}
+
+.username-btn {
+  color: white !important;
+}
+
+.username-btn:hover {
+  opacity: 0.8;
+}
 
 @media (max-width: 600px) {
   .v-btn {
@@ -112,6 +139,6 @@ export default defineComponent({
   .App-container {
     max-width: 1200px !important;
   }
-  
+
 }
 </style>
