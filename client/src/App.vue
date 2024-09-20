@@ -12,10 +12,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
-import { useAuthStore } from './stores/auth';
+import { defineComponent } from 'vue';
 import { useMediaQuery } from './consumable/useMediaQuery';
-import { useRouter } from 'vue-router';
 import Footer from './components/Footer.vue';
 import Header from './components/Header.vue';
 
