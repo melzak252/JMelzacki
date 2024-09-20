@@ -1,3 +1,4 @@
+from typing import Union
 from db import get_db
 from db.models import User
 from db.repositories.countrydle import CountrydleRepository
@@ -7,6 +8,7 @@ from schemas.countrydle import (
     FullUserHistory,
     GuessBase,
     GuessDisplay,
+    InvalidQuestionDisplay,
     QuestionBase,
     QuestionCreate,
     QuestionDisplay,
@@ -81,7 +83,7 @@ async def get_game(
     )
 
 
-@router.post("/question", response_model=QuestionDisplay)
+@router.post("/question", response_model=Union[QuestionDisplay, InvalidQuestionDisplay])
 async def ask_question(
     question: QuestionBase,
     user: User = Depends(get_current_user),
@@ -120,15 +122,17 @@ async def ask_question(
             explanation=enh_question.explanation,
             context=None,
         )
+        new_quest = await CountrydleRepository(session).create_question(question_create)
 
-        return await CountrydleRepository(session).create_question(question_create)
+        return InvalidQuestionDisplay.model_validate(new_quest)
 
-    return await gutils.ask_question(
+    new_quest = await gutils.ask_question(
         question=enh_question,
         day_country=day_country,
         user=user,
         session=session,
     )
+    return QuestionDisplay.model_validate(new_quest)
 
 
 @router.get("/result", response_model=FullUserHistory)

@@ -18,6 +18,11 @@ const routes = [
     component: HomePage,
   },
   {
+    path: "/home",
+    name: "HomePage",
+    component: HomePage,
+  },
+  {
     path: "/portfolio",
     name: "Portfolio",
     component: PortfolioPage,
@@ -44,19 +49,17 @@ export const router = createRouter({
   routes,
 });
 
-
 router.beforeEach((to, _from, next) => {
-  const store = useAuthStore()
+  const store = useAuthStore();
   // we wanted to use the store here
-  if (to.path === '/game' && !store.isAuth) next('/sign');
-  else if(to.path === '/sign' && store.isAuth) next("/");
+  if (to.path === "/game" && !store.isAuth) next("/sign");
+  else if (to.path === "/sign" && store.isAuth) next("/");
   else next();
-})
+});
 
 router.beforeEach(() => {
   // ✅ This will work because the router starts its navigation after
   // the router is installed and pinia will be installed too
   // const store = useAuthStore()
-
   // if (to.meta.requiresAuth && !store.isAuth) return '/login'
-})
+});

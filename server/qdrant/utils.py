@@ -81,7 +81,6 @@ async def get_fragments_matching_question(
     f_repo = FragmentRepository(session)
     fragments = []
     for point in points:
-        print(point.id, point.payload["country_id"])
         fragment = await f_repo.get(int(point.id))
         fragments.append(fragment)
 

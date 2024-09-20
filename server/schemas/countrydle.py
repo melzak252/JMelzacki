@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
 from pydantic import BaseModel
 
@@ -52,6 +52,21 @@ class FullQuestionDisplay(QuestionDisplay):
         from_attributes = True
 
 
+class InvalidQuestionDisplay(BaseModel):
+    id: int
+    original_question: str
+    valid: bool
+    answer: bool | None
+    user_id: int
+    day_id: int
+    asked_at: datetime
+
+    explanation: str
+
+    class Config:
+        from_attributes = True
+
+
 # Guess Schema
 class GuessBase(BaseModel):
     guess: str
@@ -74,7 +89,7 @@ class GuessDisplay(GuessBase):
 
 class UserHistory(BaseModel):
     user: UserDisplay
-    questions: List[QuestionDisplay]
+    questions: List[Union[QuestionDisplay, InvalidQuestionDisplay]]
     guesses: List[GuessDisplay]
 
     class Config:
@@ -92,7 +107,7 @@ class FullUserHistory(BaseModel):
 
 class CountrydleState(BaseModel):
     user: UserDisplay
-    questions_history: List[QuestionDisplay]
+    questions_history: List[QuestionDisplay | InvalidQuestionDisplay]
     guess_history: List[GuessDisplay]
     remaining_questions: int
     remaining_guesses: int

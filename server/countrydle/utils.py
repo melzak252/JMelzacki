@@ -23,46 +23,64 @@ Your task is to:
 4. If It's valid then improve the question by make it more obvious about its intent.
 5. If It's not valid then provide an explanation why the question is not valid.
 
+Instructions:
+- The player may refer to the selected country in various ways, including:
+    - Talking about themselves or referring to being in the country: "Am I ...?", "Do I ...?" etc.
+    - Using "it/this/that": "Is it ...?", "Does it ...?", "Is this ...?", "Is that ...?" etc.
+    - Using "the country": "Is the country ...?", "Does the country ...?", "Is that country ...?" etc.
+    - Using "here" or "there": "is here ...?", "is there ...?", etc.
+    - Using short forms: "in ...?", "is ...?" etc.
+    - In different languages.
+- Always respond in English.
+- The improved question should always use the "the country" version of the question.
+
 ### Output Format
 Answer with JSON format and nothing else. 
 Use the specific format:
 {
-  "valid": true | false,
   "question": "Improved question if question is valid",
-  "explanation": "Explanation if question is not valid"
+  "explanation": "Explanation if question is not valid",    
+  "valid": true | false
 }
 
 ### Examples
 User's Question: Is it in Europe?
 Output: 
 {
-  "valid": true,
-  "question": "Is the country located in Europe?"
+  "question": "Is the country located in Europe?",
+  "valid": true
+}
+
+User's Question: in Europe
+Output: 
+{
+  "question": "Is the country located in Europe?",
+  "valid": true
 }
 
 User's Question: Tell me about its history
 Output:
 {
-  "valid": false,
-  "explanation": "This is not a True/False question."
+  "explanation": "This is not a True/False question.",
+  "valid": false
 }
 
 User's Question: Is it seychelles?
 {
+  "question": "Is the country Seychelles?",
   "valid": true,
-  "question": "Is the country Seychelles?"
 }
 
 User's Question: Is this island/s country
 {
-  "valid": true,
-  "question": "Is the country an island nation?"
+  "question": "Is the country an island nation?",
+  "valid": true
 }
 
 User's Question: "asdfghjkl"
 {
-  "valid": false,
-  "explanation": "The input is gibberish and not a valid True/False question."
+  "explanation": "The input is gibberish and not a valid True/False question.",
+  "valid": false
 }
 """
 
@@ -148,25 +166,25 @@ Country: France. Question: Is your country known for its wines?
 }}
 Country: China. Question: Am I in Europe?
 {{
-    "explanation": "China is located in Asia."
-    "answer": false,
+    "explanation": "China is located in Asia.",
+    "answer": false
 }}
 Country: Brazil. Question: Is the country's average annual rainfall over 2000 millimeters?
 {{
-    "explanation": "The question is too vague to answer correctly."
-    "answer": null,
+    "explanation": "The question is too vague to answer correctly.",
+    "answer": null
 }}
 
 Country: Germany. Question: Is the country a neighbor of Germany?
 {{
-    "explanation": "A country is always considered to be a neighbor of itself."
-    "answer": true,
+    "explanation": "A country is always considered to be a neighbor of itself.",
+    "answer": true
 }}
 
 Country: Japan. Question: Has the country hosted the 2025 World Expo?
 {{
-  "explanation": "I cannot provide information about events occurring after April 2024."
-  "answer": null,
+  "explanation": "I cannot provide information about events occurring after April 2024.",
+  "answer": null
 }}
 """
     question_prompt = f"""Question: {question.question}"""

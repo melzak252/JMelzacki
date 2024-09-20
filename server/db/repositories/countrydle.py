@@ -10,7 +10,9 @@ from schemas.countrydle import (
     CountrydleState,
     FullUserHistory,
     GuessCreate,
+    InvalidQuestionDisplay,
     QuestionCreate,
+    QuestionDisplay,
     UserHistory,
 )
 from db.repositories.country import CountryRepository
@@ -128,7 +130,15 @@ class CountrydleRepository:
     async def get_player_histiory_for_today(
         self, user: User, day: DayCountry
     ) -> UserHistory:
-        questions = await self.get_questions_for_user_day(user, day)
+        questions = [
+            (
+                QuestionDisplay.model_validate(question)
+                if question.valid
+                else InvalidQuestionDisplay.model_validate(question)
+            )
+            for question in await self.get_questions_for_user_day(user, day)
+        ]
+
         guesses = await self.get_guesses_for_user_day(user, day)
 
         return UserHistory(user=user, questions=questions, guesses=guesses)
@@ -159,7 +169,14 @@ class CountrydleRepository:
         return game_over, won
 
     async def get_game_state(self, user: User, day: DayCountry) -> CountrydleState:
-        questions = await self.get_questions_for_user_day(user, day)
+        questions = [
+            (
+                QuestionDisplay.model_validate(question)
+                if question.valid
+                else InvalidQuestionDisplay.model_validate(question)
+            )
+            for question in await self.get_questions_for_user_day(user, day)
+        ]
         guesses = await self.get_guesses_for_user_day(user, day)
         question_asked = len(questions)
         guesses_made = len(guesses)
