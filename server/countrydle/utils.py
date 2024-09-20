@@ -121,7 +121,9 @@ Instructions:
 - If you cannot determine the answer even with general knowledge, set "answer" to null.
 - Incorporate any relevant details from the provided context about the country into your explanations.
 - If the question asks whether the country is a neighbor of itself or shares boreder with itself, answer "true".
-- For any questions about events or information from April 2024 onwards, set "answer" to null
+- For any questions about events or information from April 2024 onwards, set "answer" to null.
+- Explanations should be provided before the answer.
+- Answer should be consistent with the explanation.
 
 ### Country to Guess: {country.name}
 ### Context: 
@@ -133,38 +135,38 @@ Instructions:
 You are answering the question with your best knowledge.
 Answer with JSON forma and nothing else. Use the specific format:
 {{
-"answer": true | false | null,
-"explanation": "Your explanation for your answer."
+    "explanation": "Your explanation for your answer."
+    "answer": true | false | null,
 }}
 ### 
 
 ### Examples of answers
 Country: France. Question: Is your country known for its wines?
 {{
-    "answer": true,
     "explanation": "France is known for its Bordeaux, Champagne and many more!"
+    "answer": true,
 }}
 Country: China. Question: Am I in Europe?
 {{
-    "answer": false,
     "explanation": "China is located in Asia."
+    "answer": false,
 }}
 Country: Brazil. Question: Is the country's average annual rainfall over 2000 millimeters?
 {{
-    "answer": null,
     "explanation": "The question is too vague to answer correctly."
+    "answer": null,
 }}
 
 Country: Germany. Question: Is the country a neighbor of Germany?
 {{
-    "answer": true,
     "explanation": "A country is always considered to be a neighbor of itself."
+    "answer": true,
 }}
 
 Country: Japan. Question: Has the country hosted the 2025 World Expo?
 {{
-  "answer": null,
   "explanation": "I cannot provide information about events occurring after April 2024."
+  "answer": null,
 }}
 """
     question_prompt = f"""Question: {question.question}"""
