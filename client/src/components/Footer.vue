@@ -44,12 +44,23 @@
             <div class="white--text text-center mt-4 jmelzacki-footnote">
                 &copy; {{ new Date().getFullYear() }} JMelzacki
             </div>
+
+            <span class="app-version">
+                v{{ config.version }}
+            </span>
     </v-footer>
 </template>
 
 <script>
+import config from '../config.json'
+
 export default {
     name: 'FooterComponent',
+    setup() {
+        return {
+            config
+        }
+    }
 };
 </script>
 
@@ -88,5 +99,13 @@ export default {
 }
 .jmelzacki-footnote {
     grid-column: 1 / 4;
+}
+
+.app-version {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    font-size: 14px;
+    opacity: 0.4;
 }
 </style>

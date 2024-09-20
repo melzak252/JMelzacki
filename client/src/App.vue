@@ -1,49 +1,7 @@
 <!-- src/App.vue -->
 <template>
   <v-app>
-    <v-app-bar app>
-      <v-btn icon @click="drawer = !drawer">
-        <v-icon>mdi-menu</v-icon>
-      </v-btn>
-      <v-toolbar-title>
-        <template v-if="!authStore.isAuth">JMelzacki</template>
-        <template v-else>
-          <div style="border: 1px solid white; border-radius: 3px; max-width: max-content; padding: 5px 10px;">{{ authStore.user?.username }}</div>
-        </template>
-      </v-toolbar-title>
-
-  </v-app-bar>
-
-  <!-- Mobile Navigation Drawer -->
-  <v-navigation-drawer v-model="drawer" app temporary @click="handleDrawerClick">
-    <v-list>
-      <v-list-item to='/'>
-        <v-list-item-title>Home</v-list-item-title>
-      </v-list-item>
-
-
-      <!-- If the user is not logged in -->
-      <template v-if="!authStore.isAuth">
-        <v-list-item to='/sign'>
-          <v-list-item-title>Sign in</v-list-item-title>
-        </v-list-item>
-      </template>
-
-      <!-- If the user is logged in -->
-      <template v-else>
-        <v-list-item to='/game'>
-          <v-list-item-title>Play</v-list-item-title>
-        </v-list-item>
-        <v-list-item to='/account'>
-          <v-list-item-title>Account</v-list-item-title>
-        </v-list-item>
-        <v-list-item style="background-color: #660000;" @click="handleLogout">
-          <v-list-item-title>Logout</v-list-item-title>
-        </v-list-item>
-      </template>
-    </v-list>
-  </v-navigation-drawer>
-
+    <Header></Header>
     <v-main>
       <v-container class="App-container">
         <router-view /> <!-- This will display the current route component -->
@@ -59,37 +17,20 @@ import { useAuthStore } from './stores/auth';
 import { useMediaQuery } from './consumable/useMediaQuery';
 import { useRouter } from 'vue-router';
 import Footer from './components/Footer.vue';
+import Header from './components/Header.vue';
 
 export default defineComponent({
   name: 'App',
   components: {
-    Footer
+    Footer,
+    Header
   },
   setup() {
-    const authStore = useAuthStore()
     const isMobile = useMediaQuery("(max-width: 800px)")
-    const router = useRouter()
-    const drawer = ref(false);
-    
-    const handleLogout = () => {
-      authStore.logout();
-      router.push({ name: 'Home' })
-    };
 
-    onMounted(() => {
-      authStore.checkAuth();
-    });
-    
-    const handleDrawerClick = () => {
-      drawer.value = !drawer.value
-    }
 
     return {
-      authStore,
-      isMobile,
-      drawer,
-      handleLogout,
-      handleDrawerClick
+      isMobile
     };
   },
 });
