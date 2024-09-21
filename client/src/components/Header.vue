@@ -4,7 +4,7 @@
         <v-icon>mdi-menu</v-icon>
       </v-btn>
       <v-toolbar-title style="width: max-content;">
-        <router-link to="/" style="text-decoration: none; color: inherit; width: max-content;" class="home-link">
+        <router-link to="/" style="text-decoration: none; color: inherit; width: max-content; " class="home-link">
           <template v-if="!authStore.isAuth">
             JMelzacki
           </template>
@@ -85,5 +85,9 @@ export default defineComponent({
 .home-link:hover {
   color: #ddaa00 !important;
   border-color: #ddaa00 !important;;
+}
+
+.v-toolbar-title__placeholder {
+  width: max-content;
 }
 </style>

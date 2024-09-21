@@ -1,7 +1,7 @@
 <template>
   <v-container class="home-container">
     <v-card class="rules">
-      <v-card-title class="headline font-weight-bold" style="display: contents;">
+      <v-card-title class="headline font-weight-bold">
         Welcome to JMelzacki!
       </v-card-title>
       <v-card-text class="py-5">
