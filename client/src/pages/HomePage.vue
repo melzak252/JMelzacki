@@ -1,7 +1,7 @@
 <template>
   <v-container class="home-container">
     <v-card class="rules">
-      <v-card-title class="headline font-weight-bold">
+      <v-card-title class="headline font-weight-bold" style="display: contents;">
         Welcome to JMelzacki!
       </v-card-title>
       <v-card-text class="py-5">
@@ -185,5 +185,24 @@ export default {
   height: max-content !important;
   padding: 10px 20px !important;
   font-size: 36px !important;
+}
+
+@media (max-width: 900px) {
+  .home-container {
+    grid-template-columns: auto;
+    grid-template-rows: repeat(3, auto);
+  }
+  .home-buttons {
+    grid-row: 1;
+    grid-column: auto;
+  }
+  .rules {
+    grid-row: 2;
+  }
+  .home-leader-board {
+    grid-column: auto;
+    grid-row: auto;
+    height: 100%;
+  }
 }
 </style>
