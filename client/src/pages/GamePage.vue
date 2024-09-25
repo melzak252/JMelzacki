@@ -5,7 +5,6 @@
       <QuestionBox class="question-box" />
       <GuessBox class="guess-box"/>
     </div>
-    <AdSpace />
     <CustomPopUp
       :showPopup="showPopup"
       @update:showPopup="showPopup = $event"

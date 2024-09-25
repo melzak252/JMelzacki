@@ -9,7 +9,7 @@ export interface Question {
   explanation?: string;
 }
 
-interface GameState {
+export interface GameState {
   questionsHistory: Array<Question>;
   guessHistory: Array<{
     guess: string;
@@ -52,9 +52,13 @@ export const useGameStore = defineStore('game', {
   // Actions section
   actions: {
     async loadGameState() {
+      this.resetCorrect();
+
       const today = new Date().toISOString().split('T')[0];  
       if (this.gameDate !== today)   
         this.resetState()
+
+
 
       this.loading = true;
       try {
@@ -70,6 +74,7 @@ export const useGameStore = defineStore('game', {
         if(this.isGameOver) this.endGame()
       } catch (err) {
         this.error = 'Failed to load the game state.';
+        this.resetState();
       } finally {
         this.loading = false;
       }
@@ -141,6 +146,11 @@ export const useGameStore = defineStore('game', {
       this.selectedCountries = [];
       this.remainingQuestions = 10;
       this.remainingGuesses = 3;
+      this.isGameOver = false;
+      this.won = false;
+      this.correctCountry = null;
+    },
+    resetCorrect() {
       this.isGameOver = false;
       this.won = false;
       this.correctCountry = null;

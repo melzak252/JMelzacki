@@ -5,7 +5,8 @@
     </v-card-title>
     <v-expand-transition>
       <div v-show="isMapVisible" class="map-container">
-        <l-map ref="mapRef" :zoom="zoom" :center="center" style="height: 500px; width: 100%;">
+        <l-map ref="mapRef" :zoom="zoom" :min-zoom="minZoom" :max-zoom="maxZoom" :center="center"
+          style="height: 500px; width: 100%;">
 
           <l-geo-json ref="geoJsonRef" :geojson="countriesData" :options-style="styleCountries"
             :options="geoJsonOptions" @geojson-feature-click="onCountryClicked"
@@ -13,6 +14,11 @@
           <v-btn class="reset-btn" @click="resetMap" title="Reset selected countries">
             <span class="mdi mdi-restore" />
           </v-btn>
+          <template v-if="gameStore.isGameOver">
+            <v-btn class="correct-btn" @click="showCorrect" title="Reset selected countries">
+              <span class="mdi mdi-check" />
+            </v-btn>
+          </template>
         </l-map>
 
       </div>
@@ -21,11 +27,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
-import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet';
-import { useGameStore } from '../stores/game';
-import * as L from 'leaflet';
+import { LGeoJson, LMap, LTileLayer } from '@vue-leaflet/vue-leaflet';
 import type { Feature, Geometry } from 'geojson';
+import * as L from 'leaflet';
+import { defineComponent, onMounted, ref, watch } from 'vue';
+import { useGameStore } from '../stores/game';
 
 import 'leaflet/dist/leaflet.css';
 
@@ -46,7 +52,10 @@ export default defineComponent({
     const gameStore = useGameStore();
 
     const geoJsonRef = ref<InstanceType<typeof LGeoJson> | null>(null);
+    const mapRef = ref<InstanceType<typeof LMap> | null>(null);
     const zoom = ref(2);
+    const minZoom = ref(2);
+    const maxZoom = ref(10);
     const center = ref<[number, number]>([20, 0]);
     const isMapVisible = ref(true);
     const toggleMap = () => {
@@ -54,7 +63,6 @@ export default defineComponent({
     }
     const countriesData = ref<any>(null);
 
-    // Load the countries GeoJSON data
     const loadCountriesData = async () => {
       try {
         const response = await fetch('/countries_50m.geojson');
@@ -64,7 +72,13 @@ export default defineComponent({
       }
     };
 
-    // Style each country
+    const isCountryCorrect = (cName: string): boolean => {
+      return gameStore.correctCountry !== null && gameStore.correctCountry.name.toUpperCase() === cName.toUpperCase();
+    }
+    const getCountryColor = (isSelected: boolean, isCorrect: boolean): string => {
+      return isCorrect ? '#22cc22' : (isSelected ? '#cc2222' : '#22222')
+    }
+
     const styleCountries = (feature?: Feature<Geometry, FeatureProperties>): L.PathOptions => {
       if (!feature || !feature.properties) {
         return {
@@ -75,11 +89,11 @@ export default defineComponent({
           fillOpacity: 0.7,
         };
       }
-      const countryName = feature.properties.SOVEREIGNT; // Adjust property name if needed
-      // const isGuessed = gameStore.guessedCountries.includes(countryName);
+      const countryName = feature.properties.SOVEREIGNT;
+      const isCorrect = isCountryCorrect(countryName);
       const isSelected = gameStore.selectedCountries.includes(countryName.toUpperCase());
       return {
-        fillColor: isSelected ? '#cc2222' : '#22222',
+        fillColor: getCountryColor(isSelected, isCorrect),
         weight: 1,
         opacity: 1,
         color: 'white',
@@ -87,18 +101,19 @@ export default defineComponent({
       };
     };
 
-    // Handle country click events
     const onCountryClicked = (event: L.LeafletMouseEvent) => {
-      const countryName = event.target.feature.properties.SOVEREIGNT.toUpperCase(); // Adjust property name if needed
+      const countryName = event.target.feature.properties.SOVEREIGNT.toUpperCase();
       const isSelected = gameStore.handleCountryClick(countryName);
+      const isCorrect = isCountryCorrect(countryName);
+      if (isCorrect) return;
 
       if (geoJsonRef.value === null || geoJsonRef.value.leafletObject === undefined) return;
-      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & {_layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> }};
+      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & { _layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> } };
       for (const layer of Object.values(lObj._layers)) {
         const l = layer as L.Path & { feature?: Feature<Geometry, FeatureProperties> };
         if (!l.feature || l.feature.properties.SOVEREIGNT.toUpperCase() !== countryName) continue;
         l.setStyle({
-          fillColor: isSelected ? '#cc2222' : '#22222',
+          fillColor: getCountryColor(isSelected, false),
         });
       }
 
@@ -118,11 +133,11 @@ export default defineComponent({
       if (sovereigntName !== countryName) tooltip = `<b>${sovereigntName}</b><br/>${countryName}`
       layer.setStyle({
         weight: 2,
-        color: '#666666',
-        fillOpacity: 0.7,
+        fillOpacity: 0.8,
       });
       layer.bindTooltip(tooltip).openTooltip();
     };
+
     const geoJsonOptions = {
       style: styleCountries,
       onEachFeature: (_: Feature<Geometry, FeatureProperties>, layer: L.Layer) => {
@@ -137,14 +152,34 @@ export default defineComponent({
     const resetMap = () => {
       gameStore.selectedCountries = [];
       if (geoJsonRef.value === null || geoJsonRef.value.leafletObject === undefined) return;
-      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & {_layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> }};
+      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & { _layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> } };
       for (const layer of Object.values(lObj._layers)) {
         const l = layer as L.Path & { feature?: Feature<Geometry, FeatureProperties> };
         if (!l.feature) continue;
         l.setStyle({
-          fillColor: '#22222',
+          fillColor: getCountryColor(false, isCountryCorrect(l.feature.properties.SOVEREIGNT)),
         });
       }
+
+    }
+
+    const showCorrect = () => {
+      if (geoJsonRef.value === null || geoJsonRef.value.leafletObject === undefined) return;
+      const lObj = geoJsonRef.value.leafletObject as L.GeoJSON & { _layers: L.Path & { feature?: Feature<Geometry, FeatureProperties> } };
+      let correctLayer: L.Polygon & { feature?: Feature<Geometry, FeatureProperties> } | null = null;
+      for (const layer of Object.values(lObj._layers)) {
+        const l = layer as L.Polygon & { feature?: Feature<Geometry, FeatureProperties> };
+        if (!l.feature || !isCountryCorrect(l.feature.properties.SOVEREIGNT)) continue;
+        l.setStyle({
+          fillColor: getCountryColor(false, true),
+          weight: 2,
+        });
+        if (isCountryCorrect(l.feature.properties.ADMIN)) correctLayer = l;
+      }
+      if(mapRef.value === null || mapRef.value.leafletObject === undefined || correctLayer === null) return;
+      mapRef.value.leafletObject.flyToBounds(correctLayer.getBounds(), {
+        duration: 2,
+      })
 
     }
 
@@ -152,19 +187,29 @@ export default defineComponent({
       loadCountriesData();
     });
 
+    watch(() => gameStore.isGameOver, (newVal) => {
+      if (!newVal) return;
+      showCorrect()
+    })
+
     return {
       geoJsonRef,
+      mapRef,
       zoom,
+      minZoom,
+      maxZoom,
       center,
       geoJsonOptions,
       countriesData,
       isMapVisible,
+      gameStore,
       toggleMap,
       styleCountries,
       onCountryClicked,
       onCountryMouseOver,
       onCountryMouseOut,
-      resetMap
+      resetMap,
+      showCorrect,
     };
   },
 });
@@ -193,6 +238,22 @@ export default defineComponent({
 </style>
 
 <style>
+.correct-btn {
+  position: relative;
+  padding: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 10px !important;
+  top: 110px;
+  left: -21px;
+  background-color: white !important;
+  color: black !important;
+  font-size: 22px !important;
+  border: 2px solid rgba(0, 0, 0, 0.3) !important;
+  border-radius: 3px !important;
+  z-index: 1000;
+}
+
 .reset-btn {
   position: relative;
   padding: 0 !important;
