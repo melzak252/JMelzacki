@@ -70,7 +70,7 @@ export const apiService = {
     return apiClient.get('/countrydle/end');  // End the game and get the final result (country and explanations)
   },
   getCountrydleHistory() {
-    return apiClient.get('/countrydle/history');  // End the game and get the final result (country and explanations)
+    return apiClient.get('/countrydle/history/all');  // End the game and get the final result (country and explanations)
   },
   updateUser(user: User) {
     return apiClient.post('/users/update', user);  // End the game and get the final result (country and explanations)

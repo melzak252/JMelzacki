@@ -12,7 +12,7 @@ load_dotenv()
 router = APIRouter(prefix="/history")
 
 
-@router.get("/", response_model=CountrydleHistory)
+@router.get("/all", response_model=CountrydleHistory)
 async def gey_history(session: AsyncSession = Depends(get_db)):
     daily_countries = await CountrydleRepository(session).get_countrydle_history()
     countries_count = await CountrydleRepository(session).get_countries_count()
