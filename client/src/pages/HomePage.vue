@@ -205,4 +205,10 @@ export default {
     height: 100%;
   }
 }
+
+@media (max-width: 800px) {
+  .home-btn {
+    font-size: 24px !important;
+  }
+}
 </style>

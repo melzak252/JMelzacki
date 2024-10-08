@@ -21,7 +21,7 @@
         </v-btn>
       </template>
       <template v-else>
-        <v-btn style="height: 100%; font-size: 20px; padding: 10px 20px; width: max-content; align-items: center; background-color: #660000;" @click="handleLogout">
+        <v-btn class="logout-btn" @click="handleLogout">
           Logout
         </v-btn>
       </template>
@@ -90,4 +90,25 @@ export default defineComponent({
 .v-toolbar-title__placeholder {
   width: max-content;
 }
+
+.logout-btn {
+  height: 100% !important;
+  font-size: 20px !important; 
+  padding: 10px 20px !important; 
+  width: max-content !important; 
+  align-items: center !important; 
+  background-color: #660000 !important;
+}
+
+@media (max-width: 800px) {
+  .v-toolbar-title {
+    margin: 0 !important;
+  }
+  .logout-btn {
+    font-size: 14px !important;
+    padding: 10px 15px !important; 
+
+  }
+}
+
 </style>

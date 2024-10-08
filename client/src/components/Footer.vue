@@ -108,4 +108,17 @@ export default {
     font-size: 14px;
     opacity: 0.4;
 }
+
+@media (max-width: 800px) {
+    .v-footer {
+        grid-template-rows: auto auto auto;
+        grid-auto-columns: 200px auto;
+    }
+    .jmelzacki-footnote {
+        grid-column: 1 / 3;
+    }
+    .app-version {
+        grid-column: 1 / 3;
+    }
+}
 </style>

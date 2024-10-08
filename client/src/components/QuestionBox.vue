@@ -1,39 +1,47 @@
 <template>
   <v-card class="question-box">
-    <v-card-title>Ask Your Questions</v-card-title>
+    <v-card-title @click="toggleCollapse" style="cursor: pointer; display: flex;">
+      Ask Your Questions <v-icon style="margin-left: auto;">{{ isCollapsed ? 'mdi-chevron-up' : 'mdi-chevron-down'
+        }}</v-icon>
+    </v-card-title>
     <p style="padding-left: 1rem;">You have {{ remainingQuestions }} questions remaining.</p>
-    <div class="sent-box ma-0">
-      <v-text-field class="question-input" v-model="questionInput" maxlength="100" label="Ask a True/False Question"
-        placeholder="Is it located in Europe?" :rules="questionRules" @keyup.enter="sendQuestion" :disabled="!canSend">
-      </v-text-field>
-      <v-btn class="sent-btn" style="height: 56px; align-self: baseline;" @click="sendQuestion" color="primary"
-        :disabled="!canSend || !questionInput">
-        <template v-if="loading">
-          <v-progress-circular indeterminate color="white" size="24" class="mr-2"></v-progress-circular>
-        </template>
-        <template v-else>
-          Ask
-          <v-icon dark right style="padding-left: 10px;">
-            mdi-send
-          </v-icon>
-        </template>
-      </v-btn>
-    </div>
-    <v-row>
-      <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
-        <v-card outlined :class="getRowClass(entry)" class="pa-2" style="overflow: initial; z-index: initial">
-            <v-icon size="80" style="margin-left: auto;" class="question-icon">
-              {{ (!entry.valid || entry.answer === null) ? 'mdi-help' : (entry.answer ? 'mdi-check-bold' :
-              'mdi-close-thick')}}
-            </v-icon>
-            <v-card-title title="Improved question by system" style="justify-self: center;">
-              {{ entry.question }}
-            </v-card-title>
-            <v-card-subtitle title="Original question">{{ entry.original_question }}</v-card-subtitle>
-            <v-card-text>{{ entry.explanation }}</v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <v-expand-transition>
+      <div v-show="isCollapsed">
+        <div class="sent-box ma-0">
+          <v-text-field class="question-input" v-model="questionInput" maxlength="100" label="Ask a True/False Question"
+            placeholder="Is it located in Europe?" :rules="questionRules" @keyup.enter="sendQuestion"
+            :disabled="!canSend">
+          </v-text-field>
+          <v-btn class="sent-btn" style="height: 56px; align-self: baseline;" @click="sendQuestion" color="primary"
+            :disabled="!canSend || !questionInput">
+            <template v-if="loading">
+              <v-progress-circular indeterminate color="white" size="24" class="mr-2"></v-progress-circular>
+            </template>
+            <template v-else>
+              Ask
+              <v-icon dark right style="padding-left: 10px;">
+                mdi-send
+              </v-icon>
+            </template>
+          </v-btn>
+        </div>
+        <v-row>
+          <v-col v-for="(entry, index) in reversedQuestionsHistory" :key="index" cols="12">
+            <v-card outlined :class="getRowClass(entry)" class="pa-2" style="overflow: initial; z-index: initial">
+              <v-icon size="80" style="margin-left: auto;" class="question-icon">
+                {{ (!entry.valid || entry.answer === null) ? 'mdi-help' : (entry.answer ? 'mdi-check-bold' :
+                  'mdi-close-thick') }}
+              </v-icon>
+              <v-card-title title="Improved question by system" style="justify-self: center;">
+                {{ entry.question }}
+              </v-card-title>
+              <v-card-subtitle title="Original question">{{ entry.original_question }}</v-card-subtitle>
+              <v-card-text>{{ entry.explanation }}</v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </div>
+    </v-expand-transition>
   </v-card>
 </template>
 
@@ -50,6 +58,7 @@ export default defineComponent({
     const isMobile = useMediaQuery("(max-width: 1000px)")
 
     const questionInput = ref('');
+    const isCollapsed = ref(true);
     const isGameOver = computed(() => gameStore.isGameOver);
     const questionsHistory = computed(() => gameStore.questionsHistory);
     const loading = computed(() => gameStore.loading);
@@ -59,6 +68,10 @@ export default defineComponent({
     const reversedQuestionsHistory = computed(() => {
       return [...gameStore.questionsHistory].reverse();
     });
+
+    const toggleCollapse = () => {
+      isCollapsed.value = !isCollapsed.value;
+    };
 
     // Determine the row class based on the answer
     const getRowClass = (entry: Question) => {
@@ -91,6 +104,8 @@ export default defineComponent({
       loading,
       remainingQuestions,
       questionRules,
+      isCollapsed,
+      toggleCollapse,
       getRowClass,
       sendQuestion
     };

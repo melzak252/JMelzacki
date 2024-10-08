@@ -1,32 +1,38 @@
 <template>
   <v-card class="pa-4 guess-box">
-    <v-card-title>Make a Guess</v-card-title>
+    <v-card-title  @click="toggleCollapse" style="cursor: pointer; display: flex;">
+      Make a Guess <v-icon style="margin-left: auto;">{{ isCollapsed ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+    </v-card-title>
     <p style="padding-left: 1rem; padding-bottom: 2px;">You have {{ remainingGuesses }} guesses remaining.</p>
-    <div class="guess-container">
-      <v-text-field maxlength="30" v-model="guessInput" label="Guess the Country" placeholder="Enter your guess..."
-        @keyup.enter="sendGuess" :disabled="remainingGuesses <= 0 || loading || isGameOver" :rules="guessRules"
-        class="ma-0 mb-4 guess-input"></v-text-field>
-      <v-btn @click="sendGuess" color="primary" class="guess-button"
-        :disabled="remainingGuesses <= 0 || loading || isGameOver || !guessInput">
-        <template v-if="loading">
-          <v-progress-circular indeterminate color="white" size="24" class="mr-2"></v-progress-circular>
-        </template>
-        <template v-else>
-          Guess
-          <v-icon dark right style="padding-left: 10px;">
-            mdi-magnify
-          </v-icon>
-        </template>
-      </v-btn>
-    </div>
-    <v-row>
-      <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
-        <v-card outlined :class="getRowClass(entry.response)" class="pa-4 guess-card">
-          <v-card-title style="align-items: center; width: min-content; max-width: calc(100% - 75px);">{{ entry.guess }} </v-card-title>
-          <v-icon size="50">{{ entry.response === "True"? 'mdi-check-bold': 'mdi-close-thick' }}</v-icon>
-        </v-card>
-      </v-col>
-    </v-row>
+    <v-expand-transition>
+      <div v-show="isCollapsed">
+        <div class="guess-container">
+          <v-text-field maxlength="30" v-model="guessInput" label="Guess the Country" placeholder="Enter your guess..."
+            @keyup.enter="sendGuess" :disabled="remainingGuesses <= 0 || loading || isGameOver" :rules="guessRules"
+            class="ma-0 mb-4 guess-input"></v-text-field>
+          <v-btn @click="sendGuess" color="primary" class="guess-button"
+            :disabled="remainingGuesses <= 0 || loading || isGameOver || !guessInput">
+            <template v-if="loading">
+              <v-progress-circular indeterminate color="white" size="24" class="mr-2"></v-progress-circular>
+            </template>
+            <template v-else>
+              Guess
+              <v-icon dark right style="padding-left: 10px;">
+                mdi-magnify
+              </v-icon>
+            </template>
+          </v-btn>
+        </div>
+        <v-row>
+          <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
+            <v-card outlined :class="getRowClass(entry.response)" class="pa-4 guess-card">
+              <v-card-title style="align-items: center; width: min-content; max-width: calc(100% - 75px);">{{ entry.guess }} </v-card-title>
+              <v-icon size="50">{{ entry.response === "True"? 'mdi-check-bold': 'mdi-close-thick' }}</v-icon>
+            </v-card>
+          </v-col>
+        </v-row>
+      </div>
+    </v-expand-transition>
   </v-card>
 </template>
 
@@ -45,8 +51,12 @@ export default defineComponent({
     const isGameOver = computed(() => gameStore.isGameOver)
     const remainingGuesses = computed(() => gameStore.remainingGuesses)
     const loading = computed(() => gameStore.loading)
-
+    const isCollapsed = ref(true)
     const guessInput = ref('');
+
+    const toggleCollapse = () => {
+      isCollapsed.value = !isCollapsed.value;
+    };
 
     const getRowClass = (correct: string) => {
       if (correct === "True") return 'green-outline';
@@ -72,8 +82,10 @@ export default defineComponent({
       guessHistory,
       loading,
       guessRules,
+      isCollapsed,
       getRowClass,
-      sendGuess
+      sendGuess,
+      toggleCollapse
     };
   }
 });
