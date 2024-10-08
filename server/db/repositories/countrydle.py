@@ -43,6 +43,13 @@ class CountrydleRepository:
 
         return result.scalars().first()
 
+    async def get_last_added_day_country(self) -> DayCountry | None:
+        result = await self.session.execute(
+            select(DayCountry).order_by(DayCountry.date.desc())
+        )
+
+        return result.scalars().first()
+
     async def create_day_country(self, country: Country) -> DayCountry:
         new_entry = DayCountry(country_id=country.id)
 
@@ -57,14 +64,35 @@ class CountrydleRepository:
 
         return new_entry
 
-    async def generate_new_day_country(self) -> DayCountry:
+    async def create_day_country_with_date(
+        self, country: Country, day_date: date
+    ) -> DayCountry:
+        new_entry = DayCountry(country_id=country.id, date=day_date)
+
+        self.session.add(new_entry)
+
+        try:
+            await self.session.commit()  # Commit the transaction
+            await self.session.refresh(new_entry)  # Refresh the instance to get the ID
+        except Exception as ex:
+            await self.session.rollback()
+            raise ex
+
+        return new_entry
+
+    async def generate_new_day_country(
+        self, day_date: date | None = None
+    ) -> DayCountry:
         countries = await CountryRepository(self.session).get_all_countries()
         if not countries:
             raise ValueError("No countries in database!")
 
         country = random.choice(countries)
 
-        new_country = await self.create_day_country(country)
+        if not day_date:
+            new_country = await self.create_day_country(country)
+        else:
+            new_country = await self.create_day_country_with_date(country, day_date)
 
         return new_country
 

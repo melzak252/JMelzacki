@@ -10,13 +10,15 @@ from db.repositories.countrydle import CountrydleRepository
 from fastapi import FastAPI
 from qdrant import close_qdrant_client, init_qdrant
 from sqlalchemy.ext.asyncio import AsyncEngine
-import utils 
+import utils
+
 
 async def init_models(engine: AsyncEngine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         logging.info("Database connection established and models created.")
-        
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = get_engine()
@@ -29,9 +31,7 @@ async def lifespan(app: FastAPI):
             await populate_countries(session)
             await init_qdrant(session)
 
-            c_repo = CountrydleRepository(session)
-            if await c_repo.get_today_country() is None:
-                await c_repo.generate_new_day_country()
+        await utils.generate_day_countries()
 
         yield
     except ConnectionRefusedError:
