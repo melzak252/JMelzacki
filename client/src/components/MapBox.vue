@@ -31,7 +31,7 @@ import { LGeoJson, LMap, LTileLayer } from '@vue-leaflet/vue-leaflet';
 import type { Feature, Geometry } from 'geojson';
 import * as L from 'leaflet';
 import { defineComponent, onMounted, ref, watch } from 'vue';
-import { useGameStore } from '../stores/game';
+import { useCountrydleStore } from '../stores/countrydle';
 
 import 'leaflet/dist/leaflet.css';
 
@@ -49,7 +49,7 @@ export default defineComponent({
     LGeoJson,
   },
   setup() {
-    const gameStore = useGameStore();
+    const gameStore = useCountrydleStore();
 
     const geoJsonRef = ref<InstanceType<typeof LGeoJson> | null>(null);
     const mapRef = ref<InstanceType<typeof LMap> | null>(null);

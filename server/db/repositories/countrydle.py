@@ -1,7 +1,8 @@
 from datetime import date
 import random
 from typing import List, Tuple
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, DayCountry, Guess, Question, User
@@ -212,3 +213,34 @@ class CountrydleRepository:
             won=won,
             date=str(day.date),
         )
+
+    async def get_countrydle_history(self):
+        result = await self.session.execute(
+            select(DayCountry)
+            .options(joinedload(DayCountry.country))
+            .order_by(DayCountry.date.desc())
+        )
+
+        return result.scalars().all()
+
+    async def get_countries_count(self):
+        dc = aliased(DayCountry)
+        stmt = (
+            select(
+                Country.id,
+                Country.name,
+                func.count(dc.id).label("count"),
+                func.max(dc.date).label("last"),
+            )
+            .outerjoin(dc, Country.id == dc.country_id)
+            .group_by(Country.id, Country.name)
+            .order_by(
+                func.count(dc.id).desc(), func.max(dc.date).desc(), Country.name.asc()
+            )
+        )
+
+        result = await self.session.execute(stmt)
+
+        countries_with_count = result.all()
+
+        return countries_with_count

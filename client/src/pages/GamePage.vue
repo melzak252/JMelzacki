@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref, watch } from 'vue';
-import { useGameStore } from '../stores/game';
+import { useCountrydleStore } from '../stores/countrydle';
 import QuestionBox from '../components/QuestionBox.vue';
 import GuessBox from '../components/GuessBox.vue';
 import MapBox from '../components/MapBox.vue';
@@ -34,7 +34,7 @@ export default defineComponent({
   },
   setup() {
     // Access the store
-    const gameStore = useGameStore();
+    const gameStore = useCountrydleStore();
     const authStore = useAuthStore();
     const router = useRouter();
 

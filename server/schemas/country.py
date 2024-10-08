@@ -32,7 +32,18 @@ class DayCountryBase(BaseModel):
 
 class DayCountryDisplay(DayCountryBase):
     id: int
+    country: CountryDisplay
     date: date
+
+    class Config:
+        from_attributes = True
+
+
+class CountryCount(BaseModel):
+    id: int
+    name: str
+    count: int
+    last: date | None
 
     class Config:
         from_attributes = True

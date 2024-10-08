@@ -9,6 +9,8 @@ import AccountPage from "./pages/AccountPage.vue";
 import TermsPage from "./pages/TermsPage.vue";
 import PrivacyPage from "./pages/PrivacyPage.vue";
 import CookiePage from "./pages/CookiePage.vue";
+import CountrydleHistoryPage from "./pages/CountrydleHistoryPage.vue";
+
 import { useAuthStore } from "./stores/auth";
 
 const routes = [
@@ -42,6 +44,7 @@ const routes = [
   { path: "/terms", name: "Terms", component: TermsPage },
   { path: "/privacy", name: "Privacy", component: PrivacyPage },
   { path: "/cookie", name: "Cookie", component: CookiePage },
+  { path: "/countrydle/history", name: "CountrydleHistory", component: CountrydleHistoryPage },
 ];
 
 export const router = createRouter({

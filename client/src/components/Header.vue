@@ -33,6 +33,10 @@
       <v-list-item to='/'>
         <v-list-item-title>Home</v-list-item-title>
       </v-list-item>
+      
+      <v-list-item to='/countrydle/history'>
+        <v-list-item-title>Countrydle History</v-list-item-title>
+      </v-list-item>
       <!-- If the user is logged in -->
       <template v-if="authStore.isAuth">
         <v-list-item to='/game'>

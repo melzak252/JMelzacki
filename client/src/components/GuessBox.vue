@@ -38,13 +38,13 @@
 
 <script lang="ts">
 import { computed, defineComponent, ref } from 'vue';
-import { useGameStore } from '../stores/game'; // Import Pinia store
+import { useCountrydleStore } from '../stores/countrydle'; // Import Pinia store
 
 export default defineComponent({
   name: 'GuessBox',
   setup() {
     // Access the store
-    const gameStore = useGameStore();
+    const gameStore = useCountrydleStore();
 
     // Access state and actions
     const guessHistory = computed(() => gameStore.guessHistory)

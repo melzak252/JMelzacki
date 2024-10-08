@@ -9,6 +9,11 @@ export interface Question {
   explanation?: string;
 }
 
+export interface Country { 
+  name: string;
+  official_name: string;
+}
+
 export interface GameState {
   questionsHistory: Array<Question>;
   guessHistory: Array<{
@@ -20,18 +25,24 @@ export interface GameState {
   remainingGuesses: number;
   isGameOver: boolean;
   won: boolean;
-  correctCountry: {
-    name: string;
-    official_name: string
-  } | null;
+  correctCountry: Country | null;
   questionLimitReached: boolean;
   guessLimitReached: boolean;
   loading: boolean;
   error: string | null;
   gameDate: string;
+  countrydleHistory: Array<{
+    date: string;
+    country: Country;
+  }>;
+  countriesCount: Array<{
+    name: string;
+    count: number;
+    last: string;
+  }>;
 }
 
-export const useGameStore = defineStore('game', {
+export const useCountrydleStore = defineStore('countrydle', {
   // State section
   state: (): GameState => ({
     questionsHistory: [] as Array<Question>,
@@ -46,7 +57,9 @@ export const useGameStore = defineStore('game', {
     guessLimitReached: false, 
     loading: false,  
     error: null,  
-    gameDate: ''
+    gameDate: '',
+    countrydleHistory: [],
+    countriesCount: [],
   }),
 
   // Actions section
@@ -154,6 +167,18 @@ export const useGameStore = defineStore('game', {
       this.isGameOver = false;
       this.won = false;
       this.correctCountry = null;
+    },
+    async getCountrydleHistory() {
+      this.loading = true;
+      try {
+        const response = await apiService.getCountrydleHistory();
+        this.countrydleHistory = response.data.daily_countries;
+        this.countriesCount = response.data.countries_count;
+      } catch (err) {
+        this.error = 'Failed to load the countrydle history.';
+      } finally {
+        this.loading = false;
+      }
     },
   },
 

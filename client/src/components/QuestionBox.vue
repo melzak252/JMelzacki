@@ -47,13 +47,13 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
-import { Question, useGameStore } from '../stores/game';
+import { Question, useCountrydleStore } from '../stores/countrydle';
 import { useMediaQuery } from '../consumable/useMediaQuery';
 
 export default defineComponent({
   name: 'QuestionBox',
   setup() {
-    const gameStore = useGameStore(); // Access the Pinia store
+    const gameStore = useCountrydleStore(); // Access the Pinia store
     // Access state from the store
     const isMobile = useMediaQuery("(max-width: 1000px)")
 

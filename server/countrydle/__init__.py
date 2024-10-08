@@ -17,6 +17,7 @@ from schemas.countrydle import (
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from countrydle import history
 from users.utils import get_current_user
 
 import countrydle.utils as gutils
@@ -24,6 +25,8 @@ import countrydle.utils as gutils
 load_dotenv()
 
 router = APIRouter(prefix="/countrydle")
+
+router.include_router(history.router)
 
 
 @router.get("/state", response_model=CountrydleState)
@@ -148,15 +151,5 @@ async def player_result(
         )
 
     return await CountrydleRepository(session).get_player_full_histiory_for_today(
-        user, daily_country
-    )
-
-
-@router.get("/history", response_model=UserHistory)
-async def my_hisotry(
-    user: User = Depends(get_current_user), session: AsyncSession = Depends(get_db)
-):
-    daily_country = await CountrydleRepository(session).get_today_country()
-    return await CountrydleRepository(session).get_player_histiory_for_today(
         user, daily_country
     )

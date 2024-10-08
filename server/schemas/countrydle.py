@@ -4,7 +4,7 @@ from typing import List, Union
 from pydantic import BaseModel
 
 from schemas.user import UserDisplay
-from schemas.country import CountryDisplay
+from schemas.country import CountryCount, CountryDisplay, DayCountryDisplay
 
 
 class QuestionBase(BaseModel):
@@ -126,3 +126,11 @@ class CountrydleEndState(BaseModel):
     is_game_over: bool
     won: bool
     date: str
+
+
+class CountrydleHistory(BaseModel):
+    countries_count: List[CountryCount]
+    daily_countries: List[DayCountryDisplay]
+
+    class Config:
+        from_attributes = True
