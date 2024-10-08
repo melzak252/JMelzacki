@@ -218,6 +218,7 @@ class CountrydleRepository:
         result = await self.session.execute(
             select(DayCountry)
             .options(joinedload(DayCountry.country))
+            .where(DayCountry.date < date.today())
             .order_by(DayCountry.date.desc())
         )
 
@@ -233,6 +234,7 @@ class CountrydleRepository:
                 func.max(dc.date).label("last"),
             )
             .outerjoin(dc, Country.id == dc.country_id)
+            .where(dc.date < date.today())
             .group_by(Country.id, Country.name)
             .order_by(
                 func.count(dc.id).desc(), func.max(dc.date).desc(), Country.name.asc()
