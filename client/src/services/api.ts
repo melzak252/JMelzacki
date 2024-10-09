@@ -3,6 +3,19 @@ import config from '../config.json';
 import { User } from '../stores/auth';
 
 console.log(config.version);
+
+interface MyState {
+  data: Array<{
+    day: {
+      date: string;
+      country: {name: string; official_name: string};
+    },
+    points: number;
+    guesses_made: number;
+    questions_asked: number;
+    won: boolean;
+  }>;
+}
 const apiClient = axios.create({
   baseURL: config.apiUrl,
   withCredentials: true,   // Include credentials for cross-origin requests
@@ -72,7 +85,7 @@ export const apiService = {
   getCountrydleHistory() {
     return apiClient.get('/countrydle/statistics/history');  // End the game and get the final result (country and explanations)
   },
-  async getMyHistory(): Promise<{data: Array<any>}> {
+  async getMyHistory(): Promise<MyState> {
     return apiClient.get('/countrydle/statistics/history/me');  // End the game and get the final result (country and explanations)
   },
   updateUser(user: User) {
