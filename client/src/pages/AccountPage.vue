@@ -75,7 +75,7 @@ import { useAuthStore, User } from '../stores/auth'; // Your auth store
 import { useRouter } from 'vue-router';
 import { useVuelidate } from '@vuelidate/core';
 import { required, email, minLength } from '@vuelidate/validators';
-import { apiService } from '../services/api';
+import { apiService, MyState } from '../services/api';
 
 export default defineComponent({
     name: 'Account',
@@ -93,7 +93,7 @@ export default defineComponent({
             username: '',
             email: '',
         });
-        const history = ref([]);
+        const history = ref<Array<MyState>>([]);
         const rules = {
             username: { required, minLength: minLength(3) },
             email: { required, email },
