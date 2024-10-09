@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Permission, User, AccountUpdate
 from schemas.user import UserCreate, UserUpdate
+from db.models.countrydle import CountrydleState
+from db.models.user import UserPoints
 
 
 class UserRepository:
@@ -33,6 +35,11 @@ class UserRepository:
 
         return result.scalars().first()
 
+    async def get_all_verified_users(self):
+        result = await self.session.execute(select(User).where(User.verified == True))
+
+        return result.scalars().all()
+
     async def get_veified_user_by_username(self, username: str) -> User | None:
         result = await self.session.execute(
             select(User).where(and_(User.username == username, User.verified == True))
@@ -44,6 +51,13 @@ class UserRepository:
         result = await self.session.execute(
             select(User).where(User.username == username)
         )
+        return result.scalars().first()
+
+    async def get_user_points(self, uid) -> UserPoints | None:
+        result = await self.session.execute(
+            select(UserPoints).where(UserPoints.user_id == uid)
+        )
+
         return result.scalars().first()
 
     async def register_user(self, user: UserCreate) -> User:
@@ -108,6 +122,30 @@ class UserRepository:
 
         return user
 
+    async def add_user_points(self, user_id: int) -> UserPoints:
+        user_points = await self.get_user_points(user_id)
+        if not user_points:
+            new_points = UserPoints(user_id=user_id)
+            self.session.add(new_points)
+            await self.session.commit()
+            await self.session.refresh(new_points)
+            return new_points
+
+        await self.session.commit()
+        await self.session.refresh(user_points)
+
+        return user_points
+
+    async def update_points(self, user_id: int, state: CountrydleState):
+        user_points = await self.get_user_points(user_id)
+        if not user_points:
+            user_points = await self.add_user_points(user_id)
+
+        user_points.streak = user_points.streak + 1 if state.won else 0
+        user_points.points += state.points
+
+        await self.session.commit()
+
     async def get_last_user_update(self, user_id: int) -> AccountUpdate | None:
         since = datetime.now() - timedelta(days=30)
         result = await self.session.execute(
@@ -119,7 +157,9 @@ class UserRepository:
         )
         return result.scalars().first()
 
-    async def update_user(self, user_id: int, user_update: UserUpdate) -> User:
+    async def update_user_email_username(
+        self, user_id: int, user_update: UserUpdate
+    ) -> User:
         user = await self.get(user_id)
 
         if user.email != user_update.email and await self.get_by_email(

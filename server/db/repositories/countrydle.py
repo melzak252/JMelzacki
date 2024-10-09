@@ -1,27 +1,22 @@
 from datetime import date
 import random
-from typing import List, Tuple
-from sqlalchemy import func, select
+from pydantic import BaseModel
+from sqlalchemy import Integer, and_, func, select
 from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Country, DayCountry, Guess, Question, User
-from schemas.countrydle import (
-    CountrydleEndState,
-    CountrydleState,
-    FullUserHistory,
-    GuessCreate,
-    InvalidQuestionDisplay,
-    QuestionCreate,
-    QuestionDisplay,
-    UserHistory,
-)
+from db.models import Country, CountrydleState, DayCountry, User
 from db.repositories.country import CountryRepository
+from db.models import Guess
+from db.repositories.user import UserRepository
+from db.models.user import UserPoints
+from schemas.countrydle import LeaderboardEntry
+
+MAX_GUESSES = 3
+MAX_QUESTIONS = 10
 
 
 class CountrydleRepository:
-    MAX_GUESSES = 3
-    MAX_QUESTIONS = 10
 
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -30,6 +25,13 @@ class CountrydleRepository:
     async def get_day_county(self, dcid: int) -> DayCountry | None:
         result = await self.session.execute(
             select(DayCountry).where(DayCountry.id == dcid)
+        )
+
+        return result.scalars().first()
+
+    async def get_day_country_by_date(self, day_date: date) -> DayCountry | None:
+        result = await self.session.execute(
+            select(DayCountry).where(DayCountry.date == day_date)
         )
 
         return result.scalars().first()
@@ -96,152 +98,6 @@ class CountrydleRepository:
 
         return new_country
 
-    ### Guess
-    async def get_guess(self, gid: int) -> Guess | None:
-        result = await self.session.execute(select(Guess).where(Guess.id == gid))
-
-        return result.scalars().first()
-
-    async def create_guess(self, guess: GuessCreate) -> Guess:
-        new_entry = Guess(**guess.model_dump())
-
-        self.session.add(new_entry)
-
-        try:
-            await self.session.commit()  # Commit the transaction
-            await self.session.refresh(new_entry)  # Refresh the instance to get the ID
-        except Exception as ex:
-            await self.session.rollback()
-            raise ex
-
-        return new_entry
-
-    async def get_guesses_for_user_day(
-        self, user: User, day: DayCountry
-    ) -> List[Guess]:
-        questions_result = await self.session.execute(
-            select(Guess).where(Guess.user_id == user.id, Guess.day_id == day.id)
-        )
-
-        return questions_result.scalars().all()
-
-    ### Question
-    async def get_question(self, qid: int) -> Question | None:
-        result = await self.session.execute(select(Question).where(Question.id == qid))
-
-        return result.scalars().first()
-
-    async def create_question(self, quesiton: QuestionCreate) -> Question:
-        new_entry = Question(**quesiton.model_dump())
-
-        self.session.add(new_entry)
-
-        try:
-            await self.session.commit()  # Commit the transaction
-            await self.session.refresh(new_entry)  # Refresh the instance to get the ID
-        except Exception as ex:
-            await self.session.rollback()
-            raise ex
-
-        return new_entry
-
-    async def get_questions_for_user_day(
-        self, user: User, day: DayCountry
-    ) -> List[Question]:
-        questions_result = await self.session.execute(
-            select(Question)
-            .where(Question.user_id == user.id, Question.day_id == day.id)
-            .order_by(Question.id.asc())
-        )
-        return questions_result.scalars().all()
-
-    ### History
-    async def get_player_histiory_for_today(
-        self, user: User, day: DayCountry
-    ) -> UserHistory:
-        questions = [
-            (
-                QuestionDisplay.model_validate(question)
-                if question.valid
-                else InvalidQuestionDisplay.model_validate(question)
-            )
-            for question in await self.get_questions_for_user_day(user, day)
-        ]
-
-        guesses = await self.get_guesses_for_user_day(user, day)
-
-        return UserHistory(user=user, questions=questions, guesses=guesses)
-
-    async def get_player_full_histiory_for_today(
-        self, user: User, day: DayCountry
-    ) -> FullUserHistory:
-        questions = await self.get_questions_for_user_day(user, day)
-        guesses = await self.get_guesses_for_user_day(user, day)
-
-        return FullUserHistory(user=user, questions=questions, guesses=guesses)
-
-    async def is_player_game_over(self, player: User, day: DayCountry) -> bool:
-        guesses: List[Guess] = await self.get_guesses_for_user_day(player, day)
-
-        if len(guesses) >= 3:
-            return True
-
-        if any(g.response == "True" for g in guesses):
-            return True
-
-        return False
-
-    async def get_game_result(self, user: User, day: DayCountry) -> Tuple[bool, bool]:
-        guesses: List[Guess] = await self.get_guesses_for_user_day(user, day)
-        won = any(g.response == "True" for g in guesses)
-        game_over = len(guesses) >= 3 or won
-        return game_over, won
-
-    async def get_game_state(self, user: User, day: DayCountry) -> CountrydleState:
-        questions = [
-            (
-                QuestionDisplay.model_validate(question)
-                if question.valid
-                else InvalidQuestionDisplay.model_validate(question)
-            )
-            for question in await self.get_questions_for_user_day(user, day)
-        ]
-        guesses = await self.get_guesses_for_user_day(user, day)
-        question_asked = len(questions)
-        guesses_made = len(guesses)
-        game_over, won = await self.get_game_result(user, day)
-        return CountrydleState(
-            user=user,
-            questions_history=questions,
-            guess_history=guesses,
-            remaining_questions=self.MAX_QUESTIONS - question_asked,
-            remaining_guesses=self.MAX_GUESSES - guesses_made,
-            is_game_over=game_over,
-            won=won,
-            date=str(day.date),
-        )
-
-    async def get_end_game_state(
-        self, user: User, day: DayCountry
-    ) -> CountrydleEndState:
-        questions = await self.get_questions_for_user_day(user, day)
-        guesses = await self.get_guesses_for_user_day(user, day)
-        question_asked = len(questions)
-        guesses_made = len(guesses)
-        game_over, won = await self.get_game_result(user, day)
-        country = await CountryRepository(self.session).get(day.country_id)
-        return CountrydleEndState(
-            user=user,
-            country=country,
-            questions_history=questions,
-            guess_history=guesses,
-            remaining_questions=self.MAX_QUESTIONS - question_asked,
-            remaining_guesses=self.MAX_GUESSES - guesses_made,
-            is_game_over=game_over,
-            won=won,
-            date=str(day.date),
-        )
-
     async def get_countrydle_history(self):
         result = await self.session.execute(
             select(DayCountry)
@@ -274,3 +130,180 @@ class CountrydleRepository:
         countries_with_count = result.all()
 
         return countries_with_count
+
+    async def get_leaderboard(self):
+        cs = aliased(CountrydleState)
+        up = aliased(UserPoints)
+        stmt = (
+            select(
+                User.id,
+                User.username,
+                func.coalesce(up.points, 0).label("points"),
+                func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
+                func.coalesce(up.streak, 0).label("streak"),
+            )
+            .outerjoin(up, User.id == up.user_id)
+            .outerjoin(cs, User.id == cs.user_id)
+            .group_by(
+                User.id,
+                User.username,
+                up.points,
+                up.streak,
+            )
+            .order_by(
+                func.coalesce(up.points, 0).desc(),
+                func.coalesce(func.sum(cs.won.cast(Integer)), 0).desc(),
+                func.coalesce(up.streak, 0).desc(),
+            )
+        )
+
+        result = await self.session.execute(stmt)
+
+        leaderboard = [
+            LeaderboardEntry(
+                id=row.id,
+                username=row.username,
+                points=row.points,
+                streak=row.streak,
+                wins=row.wins,
+            )
+            for row in result.all()
+        ]
+        print(leaderboard)
+
+        return leaderboard
+
+
+class CountrydleStateRepository:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get(self, csid: int) -> CountrydleState:
+        result = await self.session.execute(
+            select(CountrydleState).where(CountrydleState.id == csid)
+        )
+
+        return result.scalars().first()
+
+    async def calc_points(self, state: CountrydleState) -> int:
+        question_points = state.remaining_questions * 100
+        guess_points = 100 * (((state.remaining_guesses + 1) ** 2) + 1)
+
+        return question_points + guess_points
+
+    async def guess_made(self, state: CountrydleState, guess: Guess) -> CountrydleState:
+        state.guesses_made += 1
+        state.remaining_guesses -= 1
+
+        if not state.remaining_guesses:
+            state.is_game_over = True
+            state.won = False
+
+        if guess.answer:
+            state.is_game_over = True
+            state.won = True
+
+        points = 0
+        if state.won:
+            points = await self.calc_points(state)
+            state.points = points
+
+        if state.is_game_over:
+            await UserRepository(self.session).update_points(state.user_id, state)
+
+        await self.session.commit()
+
+        return state
+
+    async def get_player_countrydle_state(
+        self, user: User, day: DayCountry
+    ) -> CountrydleState:
+        result = await self.session.execute(
+            select(CountrydleState)
+            .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)
+            .order_by(CountrydleState.id.asc())
+        )
+
+        state = result.scalars().first()
+
+        if state is None:
+            return await self.add_countrydle_state(user, day)
+
+        return state
+
+    async def get_player_countrydle_states(self, user: User) -> CountrydleState:
+        result = await self.session.execute(
+            select(CountrydleState)
+            .options(
+                joinedload(CountrydleState.user),
+                joinedload(CountrydleState.day),
+                joinedload(CountrydleState.day, DayCountry.country),
+            )
+            .where(
+                and_(CountrydleState.user_id == user.id, CountrydleState.is_game_over)
+            )
+            .order_by(CountrydleState.id.asc())
+        )
+
+        states = result.scalars().all()
+
+        return states
+
+    async def add_countrydle_state(
+        self,
+        user: User,
+        day: DayCountry,
+        max_questions: int = MAX_QUESTIONS,
+        max_guesses: int = MAX_GUESSES,
+    ) -> CountrydleState:
+
+        new_entry = CountrydleState(
+            user_id=user.id,
+            day_id=day.id,
+            remaining_questions=max_questions,
+            remaining_guesses=max_guesses,
+            questions_asked=0,
+            guesses_made=0,
+        )
+
+        self.session.add(new_entry)
+
+        try:
+            await self.session.commit()  # Commit the transaction
+            await self.session.refresh(new_entry)  # Refresh the instance to get the ID
+        except Exception as ex:
+            await self.session.rollback()
+            raise ex
+
+        return new_entry
+
+    async def get_state_with_history(
+        self, user: User, day: DayCountry
+    ) -> CountrydleState:
+        result = await self.session.execute(
+            select(CountrydleState)
+            .options(
+                joinedload(CountrydleState.questions),
+                joinedload(CountrydleState.guesses),
+            )
+            .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)
+            .order_by(CountrydleState.id.asc())
+        )
+
+        state = result.scalars().first()
+        if state is None:
+            return await self.add_countrydle_state(user, day)
+
+        return state
+
+    async def update_countrydle_state(self, state: CountrydleState):
+        await self.session.merge(state)
+
+        try:
+            await self.session.commit()
+            await self.session.refresh(state)
+        except Exception as ex:
+            await self.session.rollback()
+            raise ex
+
+        return state

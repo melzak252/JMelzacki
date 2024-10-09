@@ -82,79 +82,53 @@
       </v-btn>
     </v-card>
     <v-card class="home-leader-board">
-      <v-data-table class="pa-5" style="height: 100%;">
-        <thead>
-          <tr>
-            <td colspan="3">
-              <h1>Leaderboard</h1>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Nr
-            </td>
-            <td>
-              Username
-            </td>
-            <td>
-              Points
-            </td>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-              <h2 style="opacity: 0.4;">Comming soon!</h2>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3" style="text-align: center;">
-            </td>
-          </tr>
-        </tbody>
+      <v-card-title class="headline font-weight-bold">
+        Leaderboard
+      </v-card-title>
+      <v-data-table :items="countrydle.leaderboard" :items-per-page-options="[5, 10, 20, 50, 100]" :headers="headers">
+        <template v-slot:item.index="{ index }">
+            {{ index + 1 }}
+        </template>
       </v-data-table>
     </v-card>
   </v-container>
 </template>
 
 <script lang="ts">
+import { useCountrydleStore } from '../stores/countrydle';
+import { onMounted } from 'vue';
+
 export default {
   name: 'HomePage',
-  setup() { },
+  setup() { 
+    const countrydle = useCountrydleStore();
+    const headers = [
+        { title: 'Index', value: 'index', sortable: false},
+        { title: 'Player', value: 'username', width: "100px" },
+        { title: 'Points', value: 'points', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
+        { title: 'Wins', value: 'wins', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
+        { title: 'Streak', value: 'streak', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end'},
+    ];
+    onMounted(() => {
+      countrydle.getLeaderboard();
+    });
+    
+    return {
+      countrydle,
+      headers,
+    };
+  },
 };
 </script>
 
 <style>
 .home-container {
   display: grid;
-  grid-template-columns: 4fr 3fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 250px auto;
   column-gap: 15px;
   row-gap: 15px;
+  align-items: center;
 }
 
 .rules {

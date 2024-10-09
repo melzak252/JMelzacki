@@ -3,12 +3,11 @@ import json
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Country, DayCountry, Question, User
-from qdrant.utils import get_fragments_matching_question, add_question_to_qdrant
+from db.models import Country, DayCountry, User
+from qdrant.utils import get_fragments_matching_question
 from qdrant import COLLECTION_NAME
 from schemas.country import DayCountryDisplay
-from db.repositories.countrydle import CountrydleRepository
-from schemas.countrydle import GuessCreate, QuestionCreate, QuestionEnhanced
+from schemas.countrydle import QuestionCreate, QuestionEnhanced
 from db.repositories.country import CountryRepository
 
 
@@ -120,7 +119,7 @@ async def ask_question(
     day_country: DayCountry,
     user: User,
     session: AsyncSession,
-) -> Question:
+) -> QuestionCreate:
 
     fragments, question_vector = await get_fragments_matching_question(
         question.question, day_country, COLLECTION_NAME, session
@@ -221,11 +220,7 @@ Country: Japan. Question: Has the country hosted the 2025 World Expo?
         context=context,
     )
 
-    question_entity = await CountrydleRepository(session).create_question(
-        question_create
-    )
-    await add_question_to_qdrant(question_entity, question_vector, country.id)
-    return question_entity
+    return question_create, question_vector
 
 
 async def give_guess(
@@ -237,51 +232,51 @@ async def give_guess(
     You are the game master for a country guessing game. The player will guess a country, and you must determine if the guess is correct.
 
     Answering Guidelines:
-        - True: If the player correctly guessed the country, including casual or abbreviated names (e.g., USA, Holland, Pol).
-        - False: If the player's guess does not match the country.
-        - NA: If the guess is unclear or confusing.
+        - true: If the player correctly guessed the country, including casual or abbreviated names (e.g., USA, Holland, Pol).
+        - false: If the player's guess does not match the country.
+        - null: If the guess is unclear or confusing.
     
     Answer guess True or False if you are fully confident of the answer.
     Answer guess NA if guess is confusing you.
 
-    Country to Guess: {country.name}
+    Country to Guess: {country.name} ({country.official_name})
 
     ### Task: 
     Use your best knowledge to determine if the player's guess is correct. Respond only in JSON format as follows:
     {{
-        "answer": "Choose only one of these options exactly: True | False | NA",
+        "answer": true | false | null,
     }}
     ### 
     
     ### Examples
     Country: Poland. Guess: Polska
     {{
-        "answer": "True"
+        "answer": true
     }}
     
     Country: France. Guess: Franc
     {{
-        "answer": "True"
+        "answer": true
     }}
     
     Country: United States of America. Guess: USA 
     {{
-        "answer": "True"
+        "answer": true
     }}
     
     Country: Germany. Guess: Austria
     {{
-        "answer": "False"
+        "answer": false
     }}
     
     Country: Australia. Guess: Austria
     {{
-        "answer": "False"
+        "answer": false
     }}
     
     Country: France. Guess: Germany or France
     {{
-        "answer": "NA"
+        "answer": null
     }} # False because player tried to cheat. He can ask one guess at a time.
     """
 
@@ -308,10 +303,4 @@ async def give_guess(
         print(answer)
         raise
 
-    guess_create = GuessCreate(
-        guess=guess,
-        day_id=daily_country.id,
-        user_id=user.id,
-        response=answer_dict["answer"],
-    )
-    return await CountrydleRepository(session).create_guess(guess_create)
+    return answer_dict

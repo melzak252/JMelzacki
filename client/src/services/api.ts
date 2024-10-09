@@ -67,10 +67,13 @@ export const apiService = {
   },
 
   endGame() {
-    return apiClient.get('/countrydle/end');  // End the game and get the final result (country and explanations)
+    return apiClient.get('/countrydle/end/state');  // End the game and get the final result (country and explanations)
   },
   getCountrydleHistory() {
-    return apiClient.get('/countrydle/history/all');  // End the game and get the final result (country and explanations)
+    return apiClient.get('/countrydle/statistics/history');  // End the game and get the final result (country and explanations)
+  },
+  async getMyHistory(): Promise<{data: Array<any>}> {
+    return apiClient.get('/countrydle/statistics/history/me');  // End the game and get the final result (country and explanations)
   },
   updateUser(user: User) {
     return apiClient.post('/users/update', user);  // End the game and get the final result (country and explanations)
@@ -78,5 +81,7 @@ export const apiService = {
   changePassword(password: string) {
     return apiClient.post('/users/change/password', { password });  // End the game and get the final result (country and explanations)
   },
-
+  getLeaderboard() {
+    return apiClient.get('/countrydle/statistics/leaderboard');
+  }
 };

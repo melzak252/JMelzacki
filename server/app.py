@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from db.models import User
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi_mail import MessageSchema
@@ -29,12 +28,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from users import router as users_router
 from users.utils import (
     create_access_token,
-    create_verification_token,
-    get_current_user,
     send_verification_email,
     verify_email_token,
 )
-from utils.email import fm, fm_noreply
+from utils.email import fm_noreply
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(

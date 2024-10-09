@@ -61,7 +61,9 @@ async def change_username(
             status_code=400, detail="Username can only be changed once every 30 days."
         )
 
-    up_user: User = await UserRepository(session).update_user(user.id, updated_user)
+    up_user: User = await UserRepository(session).update_user_email_username(
+        user.id, updated_user
+    )
     if not up_user.verified:
 
         await send_verification_email(user, background_tasks)

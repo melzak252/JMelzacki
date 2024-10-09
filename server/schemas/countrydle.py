@@ -75,12 +75,12 @@ class GuessBase(BaseModel):
 class GuessCreate(GuessBase):
     day_id: int
     user_id: int
-    response: str
+    answer: bool | None
 
 
 class GuessDisplay(GuessBase):
     id: int
-    response: str
+    answer: bool | None
     guessed_at: datetime
 
     class Config:
@@ -105,27 +105,46 @@ class FullUserHistory(BaseModel):
         from_attributes = True
 
 
-class CountrydleState(BaseModel):
-    user: UserDisplay
-    questions_history: List[QuestionDisplay | InvalidQuestionDisplay]
-    guess_history: List[GuessDisplay]
+class CountrydleStateSchema(BaseModel):
+    questions: List[QuestionDisplay | InvalidQuestionDisplay] = []
+    guesses: List[GuessDisplay] = []
     remaining_questions: int
     remaining_guesses: int
+    questions_asked: int
+    guesses_made: int
     is_game_over: bool
     won: bool
+
+    class Config:
+        from_attributes = True
+
+
+class CountrydleEndStateSchema(BaseModel):
+    questions: List[FullQuestionDisplay]
+    guesses: List[GuessDisplay]
+    remaining_questions: int
+    remaining_guesses: int
+    questions_asked: int
+    guesses_made: int
+    is_game_over: bool
+    won: bool
+    points: int
+
+    class Config:
+        from_attributes = True
+
+
+class CountrydleStateResponse(BaseModel):
+    user: UserDisplay
     date: str
+    state: CountrydleStateSchema
 
 
-class CountrydleEndState(BaseModel):
+class CountrydleEndStateResponse(BaseModel):
     user: UserDisplay
     country: CountryDisplay
-    questions_history: List[FullQuestionDisplay]
-    guess_history: List[GuessDisplay]
-    remaining_questions: int
-    remaining_guesses: int
-    is_game_over: bool
-    won: bool
     date: str
+    state: CountrydleEndStateSchema
 
 
 class CountrydleHistory(BaseModel):
@@ -134,3 +153,11 @@ class CountrydleHistory(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class LeaderboardEntry(BaseModel):
+    id: int
+    username: str
+    points: int
+    streak: int
+    wins: int

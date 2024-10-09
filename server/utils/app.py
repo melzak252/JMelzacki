@@ -6,7 +6,7 @@ import users.crud as ucrud
 from countrydle.crud import populate_countries
 from db import AsyncSessionLocal, get_engine
 from db.models import *  # noqa: F403
-from db.repositories.countrydle import CountrydleRepository
+from db.base import Base
 from fastapi import FastAPI
 from qdrant import close_qdrant_client, init_qdrant
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -32,6 +32,7 @@ async def lifespan(app: FastAPI):
             await init_qdrant(session)
 
         await utils.generate_day_countries()
+        await utils.check_streaks()
 
         yield
     except ConnectionRefusedError:

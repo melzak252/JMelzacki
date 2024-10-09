@@ -44,7 +44,7 @@ export default defineComponent({
     const showPopup = ref(gameStore.isGameOver);
     const shouldShow = ref(false);
     const popUpTitle = computed(() => gameStore.won ? 'Congratulations!' : 'Game Over');
-    const popUpText = computed(() => gameStore.won ? "Great job! You've guessed the correct country. Keep it up!":
+    const popUpText = computed(() => gameStore.won ? `Great job! You've guessed the correct country. Keep it up! U get: <br><br> <h1>+${ gameStore.points} Points</h1>`:
             `The country was <b>${ country.value?.name }</b>. <br>Don't worry! You can get it tomorrow!`);
     onMounted(async () => {
       if(!await authStore.checkAuth()) {

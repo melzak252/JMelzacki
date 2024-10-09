@@ -25,9 +25,9 @@
         </div>
         <v-row>
           <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
-            <v-card outlined :class="getRowClass(entry.response)" class="pa-4 guess-card">
+            <v-card outlined :class="getRowClass(entry.answer)" class="pa-4 guess-card">
               <v-card-title style="align-items: center; width: min-content; max-width: calc(100% - 75px);">{{ entry.guess }} </v-card-title>
-              <v-icon size="50">{{ entry.response === "True"? 'mdi-check-bold': 'mdi-close-thick' }}</v-icon>
+              <v-icon size="50">{{ entry.answer? 'mdi-check-bold': (entry.answer===null? 'mdi-help': 'mdi-close-thick') }}</v-icon>
             </v-card>
           </v-col>
         </v-row>
@@ -58,8 +58,9 @@ export default defineComponent({
       isCollapsed.value = !isCollapsed.value;
     };
 
-    const getRowClass = (correct: string) => {
-      if (correct === "True") return 'green-outline';
+    const getRowClass = (correct: boolean | null) => {
+      if (correct) return 'green-outline';
+      if (correct === null) return 'orange-outline';
       return 'red-outline';
     };
 
@@ -117,6 +118,12 @@ export default defineComponent({
 
 .guess-container {
   padding: 0.5rem 1rem;
+}
+
+.orange-outline {
+  border: 2px solid #ff9800;
+  color: #ff9800;
+  background-color: #ff980010;
 }
 
 .guess-card {

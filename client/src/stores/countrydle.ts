@@ -18,7 +18,7 @@ export interface GameState {
   questionsHistory: Array<Question>;
   guessHistory: Array<{
     guess: string;
-    response: string;
+    answer: boolean | null;
   }>;
   selectedCountries: Array<string>;
   remainingQuestions: number;
@@ -40,6 +40,13 @@ export interface GameState {
     count: number;
     last: string;
   }>;
+  leaderboard: Array<{
+    username: string;
+    points: number;
+    streak: number;
+    wins: number;
+  }>;
+  points: number;
 }
 
 export const useCountrydleStore = defineStore('countrydle', {
@@ -47,7 +54,7 @@ export const useCountrydleStore = defineStore('countrydle', {
   state: (): GameState => ({
     questionsHistory: [] as Array<Question>,
     selectedCountries: [] as Array<string>,
-    guessHistory: [] as Array<{ guess: string; response: string; }>,
+    guessHistory: [] as Array<{ guess: string; answer: boolean | null; }>,
     remainingQuestions: 10,
     remainingGuesses: 3,
     isGameOver: false,
@@ -60,6 +67,8 @@ export const useCountrydleStore = defineStore('countrydle', {
     gameDate: '',
     countrydleHistory: [],
     countriesCount: [],
+    leaderboard: [],
+    points: 0,
   }),
 
   // Actions section
@@ -76,12 +85,12 @@ export const useCountrydleStore = defineStore('countrydle', {
       this.loading = true;
       try {
         const response = await apiService.getGameState();  
-        this.questionsHistory = response.data.questions_history;
-        this.guessHistory = response.data.guess_history;
-        this.remainingQuestions = response.data.remaining_questions;
-        this.remainingGuesses = response.data.remaining_guesses;
-        this.isGameOver = response.data.is_game_over;
-        this.won = response.data.won;
+        this.questionsHistory = response.data.state.questions;
+        this.guessHistory = response.data.state.guesses;
+        this.remainingQuestions = response.data.state.remaining_questions;
+        this.remainingGuesses = response.data.state.remaining_guesses;
+        this.isGameOver = response.data.state.is_game_over;
+        this.won = response.data.state.won;
         this.gameDate = response.data.date;
 
         if(this.isGameOver) this.endGame()
@@ -113,10 +122,10 @@ export const useCountrydleStore = defineStore('countrydle', {
       this.loading = true;
       try {
         const response = await apiService.makeGuess(guess);  
-        this.guessHistory.push({ guess, response: response.data.response });
+        this.guessHistory.push({ guess, answer: response.data.answer });
         this.remainingGuesses--;
 
-        if (response.data.response === 'True' || this.remainingGuesses <= 0) {
+        if (response.data.answer || this.remainingGuesses <= 0) {
           await this.endGame();
         }
       } catch (err) {
@@ -131,12 +140,13 @@ export const useCountrydleStore = defineStore('countrydle', {
       try {
         const response = await apiService.endGame();  
         this.correctCountry = response.data.country;
-        this.questionsHistory = response.data.questions_history;
-        this.guessHistory = response.data.guess_history;
-        this.remainingQuestions = response.data.remaining_questions;
-        this.remainingGuesses = response.data.remaining_guesses;
-        this.won = response.data.won;
-        this.isGameOver = true;
+        this.questionsHistory = response.data.state.questions;
+        this.guessHistory = response.data.state.guesses;
+        this.remainingQuestions = response.data.state.remaining_questions;
+        this.remainingGuesses = response.data.state.remaining_guesses;
+        this.isGameOver = response.data.state.is_game_over;
+        this.won = response.data.state.won;
+        this.points = response.data.state.points;
       } catch (err) {
         this.error = 'Failed to end the game.';
       } finally {
@@ -162,6 +172,7 @@ export const useCountrydleStore = defineStore('countrydle', {
       this.isGameOver = false;
       this.won = false;
       this.correctCountry = null;
+      this.points = 0;
     },
     resetCorrect() {
       this.isGameOver = false;
@@ -180,6 +191,17 @@ export const useCountrydleStore = defineStore('countrydle', {
         this.loading = false;
       }
     },
+    async getLeaderboard() {
+      this.loading = true;
+      try {
+        const response = await apiService.getLeaderboard();
+        this.leaderboard = response.data;
+      } catch (err) {
+        this.error = 'Failed to load the leaderboard.';
+      } finally {
+        this.loading = false;
+      }
+    }
   },
 
   persist: {
