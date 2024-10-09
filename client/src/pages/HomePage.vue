@@ -62,6 +62,23 @@
               </v-card-title>
               <v-card-text class="flex-grow-1">
                 Celebrate your victory!
+                <br>
+                <br>
+                For each win, you earn points and climb the leaderboard.<br><br>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" class="d-flex">
+            <v-card class="pa-3 flex-grow-1 d-flex flex-column" variant="tonal">
+              <v-card-title class="text-h6 font-weight-bold">
+                Points
+              </v-card-title>
+              <v-card-text class="flex-grow-1">
+                Questions are worth <b>100 points each.</b><br>
+                Guesses are worth more:<br>
+                - 1st guess is worth <b>1000 points</b><br>
+                - 2nd guess is worth <b>500 points</b><br>
+                - 3rd guess is worth <b>200 points</b><br>
               </v-card-text>
             </v-card>
           </v-col>
