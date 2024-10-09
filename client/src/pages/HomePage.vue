@@ -1,6 +1,6 @@
 <template>
   <v-container class="home-container">
-    <v-card class="rules">
+    <v-card class="rules" style="align-self: flex-start; margin-top: 10px;">
       <v-card-title class="headline font-weight-bold">
         Welcome to JMelzacki!
       </v-card-title>
@@ -87,7 +87,7 @@
       </v-card-title>
       <v-data-table :items="countrydle.leaderboard" :items-per-page-options="[5, 10, 20, 50, 100]" :headers="headers">
         <template v-slot:item.index="{ index }">
-            {{ index + 1 }}
+          {{ index + 1 }}
         </template>
       </v-data-table>
     </v-card>
@@ -100,19 +100,19 @@ import { onMounted } from 'vue';
 
 export default {
   name: 'HomePage',
-  setup() { 
+  setup() {
     const countrydle = useCountrydleStore();
     const headers = [
-        { title: 'Index', value: 'index', sortable: false},
-        { title: 'Player', value: 'username', width: "100px" },
-        { title: 'Points', value: 'points', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
-        { title: 'Wins', value: 'wins', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
-        { title: 'Streak', value: 'streak', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end'},
+      { title: 'Index', value: 'index', sortable: false },
+      { title: 'Player', value: 'username', width: "100px" },
+      { title: 'Points', value: 'points', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
+      { title: 'Wins', value: 'wins', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
+      { title: 'Streak', value: 'streak', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
     ];
     onMounted(() => {
       countrydle.getLeaderboard();
     });
-    
+
     return {
       countrydle,
       headers,
@@ -166,13 +166,16 @@ export default {
     grid-template-columns: auto;
     grid-template-rows: repeat(3, auto);
   }
+
   .home-buttons {
     grid-row: 1;
     grid-column: auto;
   }
+
   .rules {
     grid-row: 2;
   }
+
   .home-leader-board {
     grid-column: auto;
     grid-row: auto;
