@@ -2,7 +2,7 @@ from datetime import date
 import random
 from typing import List
 from pydantic import BaseModel
-from sqlalchemy import Integer, and_, case, func, select
+from sqlalchemy import Integer, and_, case, cast, func, select
 from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -189,24 +189,36 @@ class CountrydleRepository:
                 func.coalesce(up.streak, 0).label("streak"),
                 func.coalesce(func.sum(cs.questions_asked), 0).label("questions_asked"),
                 func.coalesce(
-                    func.sum(case((quest.answer == True, 1), else_=0)), 0
+                    func.sum(cast(func.coalesce(quest.answer == True, 0), Integer)), 0
                 ).label("questions_correct"),
                 func.coalesce(
-                    func.sum(case((quest.answer == False, 1), else_=0)), 0
+                    func.sum(cast(func.coalesce(quest.answer == False, 0), Integer)), 0
                 ).label("questions_incorrect"),
                 func.coalesce(func.sum(cs.guesses_made), 0).label("guesses_made"),
                 func.coalesce(
-                    func.sum(case((guess.answer == True, 1), else_=0)), 0
+                    func.sum(cast(func.coalesce(guess.answer == True, 0), Integer)), 0
                 ).label("guesses_correct"),
                 func.coalesce(
-                    func.sum(case((guess.answer == False, 1), else_=0)), 0
+                    func.sum(cast(func.coalesce(guess.answer == False, 0), Integer)), 0
                 ).label("guesses_incorrect"),
             )
             .outerjoin(up, User.id == up.user_id)
             .outerjoin(cs, User.id == cs.user_id)
-            .outerjoin(quest, and_(User.id == quest.user_id, quest.valid == True))
-            .outerjoin(guess, User.id == guess.user_id)
-            .where(User.id == user.id)
+            .outerjoin(
+                quest,
+                and_(
+                    User.id == quest.user_id,
+                    quest.valid == True,
+                    quest.day_id == cs.day_id,
+                ),
+            )
+            .outerjoin(guess, and_(User.id == guess.user_id, guess.day_id == cs.day_id))
+            .where(
+                and_(
+                    User.id == user.id,
+                    cs.is_game_over == True,
+                )
+            )
             .group_by(
                 User.id,
                 User.username,
