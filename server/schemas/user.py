@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel, EmailStr
@@ -47,6 +48,15 @@ class UserDisplay(BaseModel):
     id: int
     username: str
     email: EmailStr
+
+    class Config:
+        from_attributes = True
+
+
+class ProfileDisplay(BaseModel):
+    id: int
+    username: str
+    created_at: datetime | None
 
     class Config:
         from_attributes = True

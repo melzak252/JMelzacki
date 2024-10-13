@@ -13,6 +13,7 @@
     "@vuelidate/core": "^2.0.3",
     "@vuelidate/validators": "^2.0.4",
     "axios": "^1.7.4",
+    "dayjs": "^1.11.13",
     "js-cookie": "^3.0.5",
     "material-design-icons-iconfont": "^6.7.0",
     "pinia": "^2.2.2",

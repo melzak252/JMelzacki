@@ -106,6 +106,12 @@
         <template v-slot:item.index="{ index }">
           {{ index + 1 }}
         </template>
+        <template v-slot:item.username="{ item }">
+          <!-- Make username clickable -->
+          <router-link :to="{ name: 'Profile', params: { username: item.username } }" class="username-link">
+            {{ item.username }}
+          </router-link>
+        </template>
       </v-data-table>
     </v-card>
   </v-container>
@@ -120,7 +126,7 @@ export default {
   setup() {
     const countrydle = useCountrydleStore();
     const headers = [
-      { title: 'Index', value: 'index', sortable: false },
+      { title: 'Index', value: 'index', sortable: false, width: "50px" },
       { title: 'Player', value: 'username', width: "100px" },
       { title: 'Points', value: 'points', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
       { title: 'Wins', value: 'wins', sortable: true, width: "50px", align: "center" as 'start' | 'center' | 'end' },
@@ -169,6 +175,16 @@ export default {
   grid-column: 2;
   grid-row: 2;
   height: 100%;
+}
+
+.username-link {
+  text-decoration: none; 
+  color: inherit;
+}
+
+.username-link:hover {
+  color: #ddaa00;
+  text-decoration: underline;
 }
 
 .home-btn {

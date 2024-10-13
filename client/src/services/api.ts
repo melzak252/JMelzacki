@@ -95,5 +95,8 @@ export const apiService = {
   },
   getLeaderboard() {
     return apiClient.get('/countrydle/statistics/leaderboard');
+  },
+  getUserProfile(username: string) {
+    return apiClient.get(`/countrydle/statistics/users/${username}`);
   }
 };

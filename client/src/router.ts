@@ -10,6 +10,7 @@ import TermsPage from "./pages/TermsPage.vue";
 import PrivacyPage from "./pages/PrivacyPage.vue";
 import CookiePage from "./pages/CookiePage.vue";
 import CountrydleHistoryPage from "./pages/CountrydleHistoryPage.vue";
+import ProfilePage from "./pages/ProfilePage.vue";
 
 import { useAuthStore } from "./stores/auth";
 
@@ -45,6 +46,12 @@ const routes = [
   { path: "/privacy", name: "Privacy", component: PrivacyPage },
   { path: "/cookie", name: "Cookie", component: CookiePage },
   { path: "/countrydle/history", name: "CountrydleHistory", component: CountrydleHistoryPage },
+  {
+    path: '/profile/:username', // Dynamic segment for username
+    name: 'Profile',
+    component: ProfilePage,
+    props: true, // Pass the route params as props to the component
+  },
 ];
 
 export const router = createRouter({

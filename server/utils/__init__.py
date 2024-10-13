@@ -47,8 +47,8 @@ async def generate_day_countries():
     async with AsyncSessionLocal() as session:
         c_repo = CountrydleRepository(session)
 
-        for day_date in (date.today() + timedelta(n) for n in range(5)):
-            day_country = c_repo.get_day_country_by_date(day_date)
+        for day_date in (date.today() + timedelta(days=n) for n in range(5)):
+            day_country = await c_repo.get_day_country_by_date(day_date)
             if day_country is not None:
                 logging.info(f"DayCountry for {day_date} already exists.")
                 continue

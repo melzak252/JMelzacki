@@ -1,7 +1,8 @@
 from datetime import date
 import random
+from typing import List
 from pydantic import BaseModel
-from sqlalchemy import Integer, and_, func, select
+from sqlalchemy import Integer, and_, case, func, select
 from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +11,8 @@ from db.repositories.country import CountryRepository
 from db.models import Guess
 from db.repositories.user import UserRepository
 from db.models.user import UserPoints
-from schemas.countrydle import LeaderboardEntry
+from schemas.countrydle import LeaderboardEntry, UserStatistics
+from db.models.question import Question
 
 MAX_GUESSES = 3
 MAX_QUESTIONS = 10
@@ -172,6 +174,72 @@ class CountrydleRepository:
 
         return leaderboard
 
+    async def get_user_statistics(self, user: User) -> UserStatistics:
+        cs = aliased(CountrydleState)
+        up = aliased(UserPoints)
+        quest = aliased(Question)
+        guess = aliased(Guess)
+
+        stmt = (
+            select(
+                User.id,
+                User.username,
+                func.coalesce(up.points, 0).label("points"),
+                func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
+                func.coalesce(up.streak, 0).label("streak"),
+                func.coalesce(func.sum(cs.questions_asked), 0).label("questions_asked"),
+                func.coalesce(
+                    func.sum(case((quest.answer == True, 1), else_=0)), 0
+                ).label("questions_correct"),
+                func.coalesce(
+                    func.sum(case((quest.answer == False, 1), else_=0)), 0
+                ).label("questions_incorrect"),
+                func.coalesce(func.sum(cs.guesses_made), 0).label("guesses_made"),
+                func.coalesce(
+                    func.sum(case((guess.answer == True, 1), else_=0)), 0
+                ).label("guesses_correct"),
+                func.coalesce(
+                    func.sum(case((guess.answer == False, 1), else_=0)), 0
+                ).label("guesses_incorrect"),
+            )
+            .outerjoin(up, User.id == up.user_id)
+            .outerjoin(cs, User.id == cs.user_id)
+            .outerjoin(quest, and_(User.id == quest.user_id, quest.valid == True))
+            .outerjoin(guess, User.id == guess.user_id)
+            .where(User.id == user.id)
+            .group_by(
+                User.id,
+                User.username,
+                up.points,
+                up.streak,
+            )
+            .order_by(
+                func.coalesce(up.points, 0).desc(),
+                func.coalesce(func.sum(cs.won.cast(Integer)), 0).desc(),
+                func.coalesce(up.streak, 0).desc(),
+            )
+        )
+        result = await self.session.execute(stmt)
+        row = result.first()
+        history = await CountrydleStateRepository(
+            self.session
+        ).get_player_countrydle_states(user)
+        profile = UserStatistics(
+            user=user,
+            points=row.points,
+            streak=row.streak,
+            wins=row.wins,
+            questions_asked=row.questions_asked,
+            questions_correct=row.questions_correct,
+            questions_incorrect=row.questions_incorrect,
+            guesses_made=row.guesses_made,
+            guesses_correct=row.guesses_correct,
+            guesses_incorrect=row.guesses_incorrect,
+            history=history,
+        )
+
+        return profile
+
 
 class CountrydleStateRepository:
     def __init__(self, session: AsyncSession):
@@ -230,7 +298,7 @@ class CountrydleStateRepository:
 
         return state
 
-    async def get_player_countrydle_states(self, user: User) -> CountrydleState:
+    async def get_player_countrydle_states(self, user: User) -> List[CountrydleState]:
         result = await self.session.execute(
             select(CountrydleState)
             .options(

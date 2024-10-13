@@ -3,8 +3,9 @@ from typing import List, Union
 
 from pydantic import BaseModel
 
-from schemas.user import UserDisplay
+from schemas.user import ProfileDisplay, UserDisplay
 from schemas.country import CountryCount, CountryDisplay, DayCountryDisplay
+from db.models.countrydle import CountrydleState
 
 
 class QuestionBase(BaseModel):
@@ -161,3 +162,34 @@ class LeaderboardEntry(BaseModel):
     points: int
     streak: int
     wins: int
+
+
+class UserState(BaseModel):
+    remaining_questions: int
+    remaining_guesses: int
+    questions_asked: int
+    guesses_made: int
+    is_game_over: bool
+    won: bool
+    points: int
+    day: DayCountryDisplay
+
+    class Config:
+        from_attributes = True
+
+
+class UserStatistics(BaseModel):
+    user: ProfileDisplay
+    points: int
+    streak: int
+    wins: int
+    questions_asked: int
+    questions_correct: int
+    questions_incorrect: int
+    guesses_made: int
+    guesses_correct: int
+    guesses_incorrect: int
+    history: List[UserState]
+
+    class Config:
+        from_attributes = True
