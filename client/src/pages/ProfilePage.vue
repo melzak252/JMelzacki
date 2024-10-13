@@ -116,7 +116,7 @@
 <script lang="ts">
 import { ref, onMounted, defineComponent, computed } from "vue";
 import { useRoute } from "vue-router";
-import { apiService } from "../services/api"; // Update with actual API service
+import { apiService, ProfileState } from "../services/api"; // Update with actual API service
 import dayjs from "dayjs";
 
 export default defineComponent({
@@ -129,7 +129,7 @@ export default defineComponent({
                 : route.params.username
         );
 
-        const user = ref({
+        const user = ref<ProfileState>({
             user: {
                 username: "",
                 created_at: "",

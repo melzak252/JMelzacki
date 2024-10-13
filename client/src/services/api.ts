@@ -15,6 +15,24 @@ export interface MyState {
   questions_asked: number;
   won: boolean;
 }
+
+export interface ProfileState {
+  user: {
+      username: string;
+      created_at: string | null;
+  },
+  points: number;
+  streak: number;
+  wins: number;
+  questions_asked: number;
+  questions_correct: number;
+  questions_incorrect: number;
+  guesses_made: number;
+  guesses_correct: number;
+  guesses_incorrect: number;
+  history: Array<MyState>;
+}
+
 const apiClient = axios.create({
   baseURL: config.apiUrl,
   withCredentials: true,   // Include credentials for cross-origin requests
