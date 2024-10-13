@@ -184,31 +184,23 @@ class CountrydleRepository:
             select(
                 User.id,
                 User.username,
-                func.coalesce(up.points, 0).label("points"),
+                up.points,
+                up.streak,
                 func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
-                func.coalesce(up.streak, 0).label("streak"),
-                func.coalesce(func.sum(cs.questions_asked), 0).label("questions_asked"),
-                func.coalesce(
-                    func.sum(cast(func.coalesce(quest.answer, False), Integer)),
-                    0,
-                ).label("questions_correct"),
-                func.coalesce(
-                    func.sum(
-                        cast(func.coalesce(quest.answer == False, False), Integer)
-                    ),
-                    0,
-                ).label("questions_incorrect"),
-                func.coalesce(func.sum(cs.guesses_made), 0).label("guesses_made"),
-                func.coalesce(
-                    func.sum(cast(func.coalesce(guess.answer, False), Integer)),
-                    0,
-                ).label("guesses_correct"),
-                func.coalesce(
-                    func.sum(
-                        cast(func.coalesce(guess.answer == False, False), Integer)
-                    ),
-                    0,
-                ).label("guesses_incorrect"),
+                func.count(quest.id).label("questions_asked"),
+                func.coalesce(func.sum(quest.answer.cast(Integer)), 0).label(
+                    "questions_correct"
+                ),
+                func.coalesce(func.sum((quest.answer == False).cast(Integer)), 0).label(
+                    "questions_incorrect"
+                ),
+                func.count(guess.id).label("guesses_made"),
+                func.coalesce(func.sum(guess.answer.cast(Integer)), 0).label(
+                    "guesses_correct"
+                ),
+                func.coalesce(func.sum((guess.answer == False).cast(Integer)), 0).label(
+                    "guesses_incorrect"
+                ),
             )
             .outerjoin(up, User.id == up.user_id)
             .outerjoin(cs, User.id == cs.user_id)
@@ -216,7 +208,6 @@ class CountrydleRepository:
                 quest,
                 and_(
                     User.id == quest.user_id,
-                    quest.valid == True,
                     quest.day_id == cs.day_id,
                 ),
             )
@@ -225,6 +216,7 @@ class CountrydleRepository:
                 and_(
                     User.id == user.id,
                     cs.is_game_over == True,
+                    quest.valid == True,
                 )
             )
             .group_by(
@@ -232,11 +224,6 @@ class CountrydleRepository:
                 User.username,
                 up.points,
                 up.streak,
-            )
-            .order_by(
-                func.coalesce(up.points, 0).desc(),
-                func.coalesce(func.sum(cs.won.cast(Integer)), 0).desc(),
-                func.coalesce(up.streak, 0).desc(),
             )
         )
         result = await self.session.execute(stmt)
