@@ -189,17 +189,25 @@ class CountrydleRepository:
                 func.coalesce(up.streak, 0).label("streak"),
                 func.coalesce(func.sum(cs.questions_asked), 0).label("questions_asked"),
                 func.coalesce(
-                    func.sum(cast(func.coalesce(quest.answer == True, 0), Integer)), 0
+                    func.sum(cast(func.coalesce(quest.answer, False), Integer)),
+                    0,
                 ).label("questions_correct"),
                 func.coalesce(
-                    func.sum(cast(func.coalesce(quest.answer == False, 0), Integer)), 0
+                    func.sum(
+                        cast(func.coalesce(quest.answer == False, False), Integer)
+                    ),
+                    0,
                 ).label("questions_incorrect"),
                 func.coalesce(func.sum(cs.guesses_made), 0).label("guesses_made"),
                 func.coalesce(
-                    func.sum(cast(func.coalesce(guess.answer == True, 0), Integer)), 0
+                    func.sum(cast(func.coalesce(guess.answer, False), Integer)),
+                    0,
                 ).label("guesses_correct"),
                 func.coalesce(
-                    func.sum(cast(func.coalesce(guess.answer == False, 0), Integer)), 0
+                    func.sum(
+                        cast(func.coalesce(guess.answer == False, False), Integer)
+                    ),
+                    0,
                 ).label("guesses_incorrect"),
             )
             .outerjoin(up, User.id == up.user_id)
