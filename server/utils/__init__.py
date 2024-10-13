@@ -59,6 +59,11 @@ async def generate_day_countries():
         logging.warning(f"{delta.days}, {last_date}, {date.today()}")
 
         for day_date in (last_date + timedelta(n) for n in range(delta.days + 1)):
+            day_country = c_repo.get_day_country_by_date(day_date)
+            if day_country is not None:
+                logging.info(f"DayCountry for {day_date} already exists.")
+                continue
+
             print(f"Generating country for {day_date}")
             await c_repo.generate_new_day_country(day_date)
 
