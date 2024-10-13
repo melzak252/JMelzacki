@@ -46,19 +46,8 @@ async def check_streaks():
 async def generate_day_countries():
     async with AsyncSessionLocal() as session:
         c_repo = CountrydleRepository(session)
-        last = await c_repo.get_last_added_day_country()
-        last_date = date.today()
-        if last is not None:
-            last_date = last.date
 
-        delta: timedelta = (date.today() + timedelta(days=5)) - last_date
-        if delta.days <= 0:
-            logging.info("DayCountries are up to date.")
-            return
-
-        logging.warning(f"{delta.days}, {last_date}, {date.today()}")
-
-        for day_date in (last_date + timedelta(n) for n in range(delta.days + 1)):
+        for day_date in (date.today() + timedelta(n) for n in range(5)):
             day_country = c_repo.get_day_country_by_date(day_date)
             if day_country is not None:
                 logging.info(f"DayCountry for {day_date} already exists.")
