@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import select
+from sqlalchemy import Integer, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import DayCountry, Guess, User
@@ -37,3 +37,14 @@ class GuessRepository:
         )
 
         return questions_result.scalars().all()
+
+    async def get_user_guess_statistics(self, user: User) -> List[Guess]:
+        questions_result = await self.session.execute(
+            select(
+                func.count(Guess.id).label("count"),
+                func.sum(Guess.answer.cast(Integer)).label("correct"),
+                func.sum((Guess.answer == False).cast(Integer)).label("incorrect"),
+            ).where(Guess.user_id == user.id)
+        )
+        row = questions_result.first()
+        return row

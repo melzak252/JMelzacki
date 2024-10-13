@@ -13,6 +13,8 @@ from db.repositories.user import UserRepository
 from db.models.user import UserPoints
 from schemas.countrydle import LeaderboardEntry, UserStatistics
 from db.models.question import Question
+from db.repositories.question import QuestionsRepository
+from db.repositories.guess import GuessRepository
 
 MAX_GUESSES = 3
 MAX_QUESTIONS = 10
@@ -175,73 +177,35 @@ class CountrydleRepository:
         return leaderboard
 
     async def get_user_statistics(self, user: User) -> UserStatistics:
-        cs = aliased(CountrydleState)
-        up = aliased(UserPoints)
-        quest = aliased(Question)
-        guess = aliased(Guess)
-
-        stmt = (
+        up = await UserRepository(self.session).get_user_points(user.id)
+        result = await self.session.execute(
             select(
-                User.id,
-                User.username,
-                up.points,
-                up.streak,
-                func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
-                func.count(quest.id).label("questions_asked"),
-                func.coalesce(func.sum(quest.answer.cast(Integer)), 0).label(
-                    "questions_correct"
-                ),
-                func.coalesce(func.sum((quest.answer == False).cast(Integer)), 0).label(
-                    "questions_incorrect"
-                ),
-                func.count(guess.id).label("guesses_made"),
-                func.coalesce(func.sum(guess.answer.cast(Integer)), 0).label(
-                    "guesses_correct"
-                ),
-                func.coalesce(func.sum((guess.answer == False).cast(Integer)), 0).label(
-                    "guesses_incorrect"
-                ),
-            )
-            .outerjoin(up, User.id == up.user_id)
-            .outerjoin(cs, User.id == cs.user_id)
-            .outerjoin(
-                quest,
-                and_(
-                    User.id == quest.user_id,
-                    quest.day_id == cs.day_id,
-                ),
-            )
-            .outerjoin(guess, and_(User.id == guess.user_id, guess.day_id == cs.day_id))
-            .where(
-                and_(
-                    User.id == user.id,
-                    cs.is_game_over == True,
-                    quest.valid == True,
-                )
-            )
-            .group_by(
-                User.id,
-                User.username,
-                up.points,
-                up.streak,
-            )
+                func.sum(CountrydleState.won.cast(Integer)).label("wins"),
+            ).where(CountrydleState.user_id == user.id)
         )
-        result = await self.session.execute(stmt)
-        row = result.first()
+        wins = result.scalar() or 0
+        questions_asked, corr_quest, incorr_questions = await QuestionsRepository(
+            self.session
+        ).get_user_question_statistics(user)
+
+        guesses_made, guesses_correct, guesses_incorrect = await GuessRepository(
+            self.session
+        ).get_user_guess_statistics(user)
+
         history = await CountrydleStateRepository(
             self.session
         ).get_player_countrydle_states(user)
         profile = UserStatistics(
             user=user,
-            points=row.points,
-            streak=row.streak,
-            wins=row.wins,
-            questions_asked=row.questions_asked,
-            questions_correct=row.questions_correct,
-            questions_incorrect=row.questions_incorrect,
-            guesses_made=row.guesses_made,
-            guesses_correct=row.guesses_correct,
-            guesses_incorrect=row.guesses_incorrect,
+            points=up.points,
+            streak=up.streak,
+            wins=wins,
+            questions_asked=questions_asked,
+            questions_correct=corr_quest,
+            questions_incorrect=incorr_questions,
+            guesses_made=guesses_made,
+            guesses_correct=guesses_correct,
+            guesses_incorrect=guesses_incorrect,
             history=history,
         )
 

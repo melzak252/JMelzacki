@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import select
+from sqlalchemy import Integer, and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import DayCountry, Question, User
@@ -40,3 +40,16 @@ class QuestionsRepository:
             .order_by(Question.id.asc())
         )
         return questions_result.scalars().all()
+
+    async def get_user_question_statistics(self, user: User) -> List[Question]:
+
+        questions_result = await self.session.execute(
+            select(
+                func.count(Question.id).label("count"),
+                func.sum(Question.answer.cast(Integer)).label("correct"),
+                func.sum((Question.answer == False).cast(Integer)).label("incorrect"),
+            ).where(and_(Question.user_id == user.id, Question.valid == True))
+        )
+        row = questions_result.first()
+        print(row)
+        return row
