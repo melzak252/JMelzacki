@@ -169,7 +169,6 @@ class CountrydleRepository:
             )
             for row in result.all()
         ]
-        print(leaderboard)
 
         return leaderboard
 
