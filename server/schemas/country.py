@@ -32,7 +32,7 @@ class DayCountryBase(BaseModel):
 
 class DayCountryDisplay(DayCountryBase):
     id: int
-    country: CountryDisplay
+    country: CountryDisplay | None
     date: date
 
     class Config:
