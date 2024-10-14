@@ -44,8 +44,8 @@ class CountrydleState(Base):
     won = Column(Boolean, nullable=False, default=False)
     points = Column(Integer, nullable=False, default=0)
 
-    user: User = relationship("User")
-    day: DayCountry = relationship("DayCountry")
+    user = relationship("User")
+    day = relationship("DayCountry")
 
     # Corrected relationship for questions with foreign() annotation
     questions = relationship(
