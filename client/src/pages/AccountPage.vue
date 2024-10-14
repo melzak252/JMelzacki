@@ -53,7 +53,7 @@
                         <tbody>
                             <tr v-for="entry in history" :key="entry.id" :class="entry.won? 'won-row': 'lost-row'">
                                 <td>{{ entry.day.date }}</td>
-                                <td>{{ entry.day.country.name}}</td>
+                                <td>{{ entry.day.country?.name}}</td>
                                 <td>{{ entry.points }}</td>
                                 <td>{{ entry.questions_asked }}</td>
                                 <td>{{ entry.guesses_made }}</td>

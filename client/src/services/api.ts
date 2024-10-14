@@ -8,7 +8,7 @@ export interface MyState {
   id: number;
   day: {
     date: string;
-    country: {name: string; official_name: string};
+    country: {name: string; official_name: string} | null;
   },
   points: number;
   guesses_made: number;

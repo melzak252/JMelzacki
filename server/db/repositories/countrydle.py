@@ -194,7 +194,8 @@ class CountrydleRepository:
 
         history = await CountrydleStateRepository(
             self.session
-        ).get_player_countrydle_states(user)
+        ).get_player_countrydle_states(user, show_today=False)
+
         profile = UserStatistics(
             user=user,
             points=up.points,
@@ -269,7 +270,9 @@ class CountrydleStateRepository:
 
         return state
 
-    async def get_player_countrydle_states(self, user: User) -> List[CountrydleState]:
+    async def get_player_countrydle_states(
+        self, user: User, show_today: bool = True
+    ) -> List[CountrydleState]:
         result = await self.session.execute(
             select(CountrydleState)
             .options(
@@ -278,12 +281,20 @@ class CountrydleStateRepository:
                 joinedload(CountrydleState.day, DayCountry.country),
             )
             .where(
-                and_(CountrydleState.user_id == user.id, CountrydleState.is_game_over)
+                and_(
+                    CountrydleState.user_id == user.id,
+                    CountrydleState.is_game_over,
+                )
             )
-            .order_by(CountrydleState.id.asc())
+            .order_by(CountrydleState.id.desc())
         )
 
         states = result.scalars().all()
+
+        if not show_today:
+            for state in states:
+                if state.day.date == date.today():
+                    state.day.country = None
 
         return states
 

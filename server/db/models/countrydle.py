@@ -17,6 +17,7 @@ from sqlalchemy.sql import func
 from db.base import Base
 from db.models.guess import Guess
 from db.models.question import Question
+from db.models.user import User
 
 
 class DayCountry(Base):
@@ -43,8 +44,8 @@ class CountrydleState(Base):
     won = Column(Boolean, nullable=False, default=False)
     points = Column(Integer, nullable=False, default=0)
 
-    user = relationship("User")
-    day = relationship("DayCountry")
+    user: User = relationship("User")
+    day: DayCountry = relationship("DayCountry")
 
     # Corrected relationship for questions with foreign() annotation
     questions = relationship(
