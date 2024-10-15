@@ -85,8 +85,8 @@ export const useCountrydleStore = defineStore('countrydle', {
       this.loading = true;
       try {
         const response = await apiService.getGameState();  
-        this.questionsHistory = response.data.state.questions;
-        this.guessHistory = response.data.state.guesses;
+        this.questionsHistory = response.data.questions;
+        this.guessHistory = response.data.guesses;
         this.remainingQuestions = response.data.state.remaining_questions;
         this.remainingGuesses = response.data.state.remaining_guesses;
         this.isGameOver = response.data.state.is_game_over;
@@ -140,8 +140,8 @@ export const useCountrydleStore = defineStore('countrydle', {
       try {
         const response = await apiService.endGame();  
         this.correctCountry = response.data.country;
-        this.questionsHistory = response.data.state.questions;
-        this.guessHistory = response.data.state.guesses;
+        this.questionsHistory = response.data.questions;
+        this.guessHistory = response.data.guesses;
         this.remainingQuestions = response.data.state.remaining_questions;
         this.remainingGuesses = response.data.state.remaining_guesses;
         this.isGameOver = response.data.state.is_game_over;
