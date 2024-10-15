@@ -329,6 +329,8 @@ class CountrydleStateRepository:
     async def get_state_with_history(
         self, user: User, day: DayCountry
     ) -> CountrydleState:
+        questions_alias = aliased(CountrydleState.questions)
+        guesses_alias = aliased(CountrydleState.guesses)
         result = await self.session.execute(
             select(CountrydleState)
             .options(
@@ -336,7 +338,11 @@ class CountrydleStateRepository:
                 joinedload(CountrydleState.guesses),
             )
             .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)
-            .order_by(CountrydleState.id.asc(), Question.id.desc(), Guess.id.desc())
+            .order_by(
+                CountrydleState.id.asc(),
+                questions_alias.id.desc(),
+                guesses_alias.id.desc(),
+            )
         )
 
         state = result.scalars().first()
