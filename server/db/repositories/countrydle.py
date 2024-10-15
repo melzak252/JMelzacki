@@ -336,7 +336,7 @@ class CountrydleStateRepository:
                 joinedload(CountrydleState.guesses),
             )
             .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)
-            .order_by(CountrydleState.id.asc())
+            .order_by(CountrydleState.id.asc(), Question.id.desc(), Guess.id.desc())
         )
 
         state = result.scalars().first()
