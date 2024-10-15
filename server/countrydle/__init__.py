@@ -81,7 +81,9 @@ async def get_end_state(
     day_country = await CountrydleRepository(session).get_today_country()
     state = await CountrydleStateRepository(session).get_state(user, day_country)
     guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
-    questions = await QuestionsRepository(session).get_user_day_questions()
+    questions = await QuestionsRepository(session).get_user_day_questions(
+        user, day_country
+    )
 
     if not state.is_game_over:
         raise HTTPException(
