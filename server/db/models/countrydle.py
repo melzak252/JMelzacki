@@ -46,26 +46,3 @@ class CountrydleState(Base):
 
     user = relationship("User")
     day = relationship("DayCountry")
-
-    # Corrected relationship for questions with foreign() annotation
-    questions = relationship(
-        "Question",
-        primaryjoin=and_(
-            user_id
-            == foreign(Question.user_id),  # Use foreign() to specify foreign key
-            day_id == foreign(Question.day_id),  # Use foreign() to specify foreign key
-        ),
-        viewonly=True,
-        lazy="select",
-    )
-
-    # Corrected relationship for guesses with foreign() annotation
-    guesses = relationship(
-        "Guess",
-        primaryjoin=and_(
-            user_id == foreign(Guess.user_id),  # Use foreign() to specify foreign key
-            day_id == foreign(Guess.day_id),  # Use foreign() to specify foreign key
-        ),
-        viewonly=True,
-        lazy="select",
-    )

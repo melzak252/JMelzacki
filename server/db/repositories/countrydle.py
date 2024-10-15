@@ -3,7 +3,7 @@ import random
 from typing import List
 from pydantic import BaseModel
 from sqlalchemy import Integer, and_, case, cast, func, select
-from sqlalchemy.orm import joinedload, aliased
+from sqlalchemy.orm import joinedload, aliased, contains_eager
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, CountrydleState, DayCountry, User
@@ -326,26 +326,15 @@ class CountrydleStateRepository:
 
         return new_entry
 
-    async def get_state_with_history(
-        self, user: User, day: DayCountry
-    ) -> CountrydleState:
-        questions_alias = aliased(Question)
-        guesses_alias = aliased(Guess)
+    async def get_state(self, user: User, day: DayCountry) -> CountrydleState:
         result = await self.session.execute(
             select(CountrydleState)
-            .options(
-                joinedload(CountrydleState.questions),
-                joinedload(CountrydleState.guesses),
-            )
             .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)
-            .order_by(
-                CountrydleState.id.asc(),
-                questions_alias.id.desc(),
-                guesses_alias.id.desc(),
-            )
+            .order_by(CountrydleState.id.asc())
         )
 
         state = result.scalars().first()
+
         if state is None:
             return await self.add_countrydle_state(user, day)
 

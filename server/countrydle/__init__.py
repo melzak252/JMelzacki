@@ -42,7 +42,9 @@ async def get_state(
     session: AsyncSession = Depends(get_db),
 ):
     day_country = await CountrydleRepository(session).get_today_country()
-    state = await CountrydleStateRepository(session).get_state_with_history(
+    state = await CountrydleStateRepository(session).get_state(user, day_country)
+    guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
+    questions = await QuestionsRepository(session).get_user_day_questions(
         user, day_country
     )
 
@@ -57,16 +59,17 @@ async def get_state(
             if question.valid
             else InvalidQuestionDisplay.model_validate(question)
         )
-        for question in state.questions
+        for question in questions
     ]
 
     response_state = CountrydleStateSchema.model_validate(state)
-    response_state.questions = questions
 
     return CountrydleStateResponse(
         user=user,
         date=str(day_country.date),
         state=response_state,
+        guesses=guesses,
+        questions=questions,
     )
 
 
@@ -76,9 +79,9 @@ async def get_end_state(
     session: AsyncSession = Depends(get_db),
 ):
     day_country = await CountrydleRepository(session).get_today_country()
-    state = await CountrydleStateRepository(session).get_state_with_history(
-        user, day_country
-    )
+    state = await CountrydleStateRepository(session).get_state(user, day_country)
+    guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
+    questions = await QuestionsRepository(session).get_user_day_questions()
 
     if not state.is_game_over:
         raise HTTPException(
@@ -92,6 +95,8 @@ async def get_end_state(
         date=str(day_country.date),
         country=country,
         state=CountrydleEndStateSchema.model_validate(state),
+        guesses=guesses,
+        questions=questions,
     )
 
 

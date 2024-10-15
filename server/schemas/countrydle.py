@@ -107,8 +107,7 @@ class FullUserHistory(BaseModel):
 
 
 class CountrydleStateSchema(BaseModel):
-    questions: List[QuestionDisplay | InvalidQuestionDisplay] = []
-    guesses: List[GuessDisplay] = []
+
     remaining_questions: int
     remaining_guesses: int
     questions_asked: int
@@ -121,8 +120,7 @@ class CountrydleStateSchema(BaseModel):
 
 
 class CountrydleEndStateSchema(BaseModel):
-    questions: List[FullQuestionDisplay]
-    guesses: List[GuessDisplay]
+
     remaining_questions: int
     remaining_guesses: int
     questions_asked: int
@@ -139,6 +137,8 @@ class CountrydleStateResponse(BaseModel):
     user: UserDisplay
     date: str
     state: CountrydleStateSchema
+    questions: List[QuestionDisplay | InvalidQuestionDisplay] = []
+    guesses: List[GuessDisplay] = []
 
 
 class CountrydleEndStateResponse(BaseModel):
@@ -146,6 +146,8 @@ class CountrydleEndStateResponse(BaseModel):
     country: CountryDisplay
     date: str
     state: CountrydleEndStateSchema
+    questions: List[FullQuestionDisplay]
+    guesses: List[GuessDisplay]
 
 
 class CountrydleHistory(BaseModel):
