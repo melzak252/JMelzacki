@@ -329,8 +329,8 @@ class CountrydleStateRepository:
     async def get_state_with_history(
         self, user: User, day: DayCountry
     ) -> CountrydleState:
-        questions_alias = aliased(CountrydleState.questions)
-        guesses_alias = aliased(CountrydleState.guesses)
+        questions_alias = aliased(Question)
+        guesses_alias = aliased(Guess)
         result = await self.session.execute(
             select(CountrydleState)
             .options(
